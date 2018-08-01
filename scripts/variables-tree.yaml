@@ -1,0 +1,209 @@
+# Generar árbol de variables
+
+# Template
+# ------------
+# dimenasion:
+#   - subdimensión:
+#       - subsubdimension:
+#           - variables:
+#               variable1:
+#                   - direction: positivo / negativo
+#                   - type: categorica / numerico
+#                   - weight: 0.5 # [0,1]
+#                   - treatment: deciles /
+#                   - numerizacion: blabla
+
+amenazas:
+    - name: 'Amenazas'
+    - aggregation: mean
+    - weight: 10
+    # Subdimensions
+    - dimensions:
+        naturales:
+        - name: 'Amenazas Naturales'
+        - aggregation: mean
+        - weight: 7
+        - dimensions:
+
+            fenomenos_hidrometeorologicos:
+            - name: 'Fenómeno Hidrometeorológico'
+            - aggregation: mean
+            - weight: 6
+            - variables:
+                inundacion:
+                - name: 'Peligro por Inundación'
+                - table: 'clean.cenapred'
+                - direction: negativo
+                - type: categorica
+                - weight: 5
+                - treatment: None
+                sequia:
+                - name: 'Grado de peligro por sequia'
+                - table: 'clean.cenapred'
+                - direction: negativo
+                - type: categorica
+                - weight: 5
+                - treatment: None
+                bajas_temperaturas:
+                - name: 'Grado de peligro por bajas temperaturas'
+                - table: 'clean.cenapred'
+                - direction: negativo
+                - type: categorica
+                - weight: 5
+                - treatment: None
+                ciclones:
+                - name: 'Grado de peligro por ciclones tropicales'
+                - table: 'clean.cenapred'
+                - direction: negativo
+                - type: categorica
+                - weight: 5
+                - treatment: None
+
+            fenomenos_geologicos:
+            - name: 'Fenómeno Geológico'
+            - aggregation: mean
+            - weight: 8
+            - variables:
+                laderas:
+                - name: 'Grado de susceptibilidad de Laderas'
+                - table: 'clean.cenapred'
+                - direction: negativo
+                - type: categorica
+                - weight: 5
+                - treatment: None
+                sismo:
+                - name: 'Grado de peligro por fenómenos geológicos (Sismo)'
+                - table: 'clean.cenapred'
+                - direction: negativo
+                - type: categorica
+                - weight: 5
+                - treatment: None
+                tsunami:
+                - name: 'Grado de peligro por fenómenos geológicos (Sismo)'
+                - table: 'clean.cenapred'
+                - direction: negativo
+                - type: categorica
+                - weight: 5
+                - treatment: None
+
+        humanas:
+        - name: 'Amenazas Humanas (Fenómenos Antropogénicos)'
+        - aggregation: mean
+        - weight: 7
+        - dimensions:
+
+            violencia:
+            - name: 'Violencia y delincuencia'
+            - aggregation: mean
+            - weight: 8
+            - variables:
+                homicidios_dolosos:
+                - name: 'Homicidios por cada 100,000 habitantes (Dolosos)'
+                - table: 'clean.municipal_delitos'
+                - direction: negativo
+                - type: numerico
+                - weight: 5
+                - treatment: deciles
+                homicidios_culposos:
+                - name: 'Homicidios por cada 100,000 habitantes (Dolosos)'
+                - table: 'clean.municipal_delitos'
+                - direction: negativo
+                - type: numerico
+                - weight: 5
+                - treatment: deciles
+                secuestros:
+                - name: 'Secuestros por cada 100,000 habitantes'
+                - table: 'clean.municipal_delitos'
+                - direction: negativo
+                - type: numerico
+                - weight: 5
+                - treatment: deciles
+                incidencia_delitos:
+                - name: 'Tasa de Incidencia de Delitos'
+                - table: 'clean.municipal_delitos'
+                - direction: negativo
+                - type: numerico
+                - weight: 5
+                - treatment: deciles
+                robo_vehiculos:
+                - name: 'Robo de Vehículos'
+                - table: 'clean.municipal_delitos'
+                - direction: negativo
+                - type: numerico
+                - weight: 5
+                - treatment: deciles
+                feminicidios:
+                - name: 'Feminicidios'
+                - table: 'clean.municipal_delitos'
+                - direction: negativo
+                - type: numerico
+                - weight: 5
+                - treatment: deciles
+                violencia_familiar:
+                - name: 'Violencia familiar'
+                - table: 'clean.municipal_delitos'
+                - direction: negativo
+                - type: numerico
+                - weight: 5
+                - treatment: deciles
+                violencia_escolar:
+                - name: 'Violencia escolar'
+                - table: 'clean.municipal_delitos'
+                - direction: negativo
+                - type: numerico
+                - weight: 5
+                - treatment: deciles
+
+            economicas:
+            - name: 'Económicas'
+            - aggregation: mean
+            - weight: 6
+            - variables:
+                inpc:
+                - name: 'Inflación (INPC)'
+                - table: 'clean.inpc_estados'
+                - direction: negativo
+                - type: numerico
+                - weight: 5
+                - treatment: deciles
+                volatilidad_precio_agricola:
+                - name: 'Volatilidad de precios agricolas'
+                - table: 'features.precios_agricolas'
+                - direction: negativo
+                - type: numerico
+                - weight: 5
+                - treatment: deciles
+                anomalia_prod_agricola:
+                - name: 'Anomalia de producción agrícola'
+                - table: 'features.anomalia_prod_agricola'
+                - direction: negativo
+                - type: numerico
+                - weight: 5
+                - treatment: deciles
+
+            demograficos:
+            - name: 'Demográficos'
+            - aggregation: mean
+            - weight: 5
+            - variables:
+                migracion_interna:
+                    - name: 'Migración Interna'
+                    - table: 'clean.migracion'
+                    - direction: negativo
+                    - type: numerico
+                    - weight: 5
+                    - treatment: deciles
+                migracion_externa:
+                    - name: 'Migración Externa'
+                    - table: 'clean.migracion'
+                    - direction: negativo
+                    - type: numerico
+                    - weight: 5
+                    - treatment: deciles
+                poblacion_flotante:
+                    - name: 'Poblaciones Flotantes'
+                    - table: 'clean.migracion'
+                    - direction: negativo
+                    - type: numerico
+                    - weight: 5
+                    - treatment: deciles
