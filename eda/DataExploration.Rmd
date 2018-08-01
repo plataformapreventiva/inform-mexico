@@ -1,0 +1,43 @@
+---
+title: "DataExploration"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(dbrsocial)
+library(DBI)
+library(glue)
+library(DataExplorer)
+library(rlang)
+
+dotenv::load_dot_env("../.env")
+
+```
+
+## Define table and parameters
+```{r, echo=FALSE}
+schema <- 'clean'
+table_name <- 'coneval_municipios'
+data_date <- '2016-a'
+## TODO: agregar filtros y selects para el reporte
+```
+
+
+```{r, echo=FALSE}
+con <- prev_connect()
+df <-  dplyr::tbl(con, dbplyr::in_schema(schema, table_name)) %>%
+        filter(data_date == data_date) %>%
+        collect()
+```
+
+## Data Explorer
+
+
+```{r pressure}
+output_file <- glue('{table_name}.html')
+create_report(data = df , output_file = output_file)
+```
+
+
