@@ -18,10 +18,11 @@ dodo <- function(type, dimensions){
         names_sub <- names(dimensions)
         for (name_sub in names_sub){
             c(long_name, aggregation, weight, dimensions, type) := dim_block(dimensions, name_sub)
-            return(dodo(type, dimensions)
+            return(dodo(type, dimensions))
         }
+    }
     if (type == 'vars'){
-        
+        map_df()
     }
 }
 
@@ -46,7 +47,6 @@ if type == 'subdim' {
 subdim_names <- names(dim_subdims)
 
 variable_block <- function(config, name) {
-
     # get subconfig
     sub_config <- config[[c(name)]]
     # return parameters
@@ -64,9 +64,15 @@ variable_block <- function(config, name) {
 
     # Apply treatment if needed
     if ( !is.na(treatment)) {
-        var <- eval(treatmente)
+        fun <- get(treatment)
+        var <- fun(treatment, var)
     }
 
+    # Reverse function if its on a different direction
+    if ( direction == 'positive') {
+        var <- reverse(var)
+    }
+    return list(var, weight)
 }
 
 dim_block <- function(config, name) {
