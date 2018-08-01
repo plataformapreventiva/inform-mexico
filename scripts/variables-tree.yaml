@@ -15,49 +15,45 @@
 
 amenazas:
     - name: 'Amenazas'
-    - aggregation: mean
-    - weight: 10
-    # Subdimensions
-    - dimensions:
-        naturales:
-        - name: 'Amenazas Naturales'
-        - aggregation: mean
-        - weight: 7
-        - dimensions:
+      aggregation: mean
+      weight: 10
+      dimensions:
+        # Subdimensions
+        - dimension: naturales
+          name: 'Amenazas Naturales'
+          aggregation: mean
+          weight: 7
+          dimensions:
 
-            fenomenos_hidrometeorologicos:
-            - name: 'Fenómeno Hidrometeorológico'
-            - aggregation: mean
-            - weight: 6
-            - variables:
-                inundacion:
-                - name: 'Peligro por Inundación'
-                - table: 'clean.cenapred'
-                - direction: negativo
-                - type: categorica
-                - weight: 5
-                - treatment: None
-                sequia:
-                - name: 'Grado de peligro por sequia'
-                - table: 'clean.cenapred'
-                - direction: negativo
-                - type: categorica
-                - weight: 5
-                - treatment: None
-                bajas_temperaturas:
-                - name: 'Grado de peligro por bajas temperaturas'
-                - table: 'clean.cenapred'
-                - direction: negativo
-                - type: categorica
-                - weight: 5
-                - treatment: None
-                ciclones:
-                - name: 'Grado de peligro por ciclones tropicales'
-                - table: 'clean.cenapred'
-                - direction: negativo
-                - type: categorica
-                - weight: 5
-                - treatment: None
+              - dimension: fenomenos_hidrometeorologicos
+                name: 'Fenómeno Hidrometeorológico'
+                aggregation: mean
+                weight: 6
+                variables:
+                    - variable: gp_inundac
+                      name: 'Peligro por Inundación'
+                      table: 'clean.cenapred'
+                      direction: negativo
+                      type: categorica
+                      weight: 5
+                    - variable: gp_sequia2
+                      name: 'Grado de peligro por sequia'
+                      table: 'clean.cenapred'
+                      direction: negativo
+                      type: categorica
+                      weight: 5
+                    - variable: gp_bajaste
+                      name: 'Grado de peligro por bajas temperaturas'
+                      table: 'clean.cenapred'
+                      direction: negativo
+                      type: categorica
+                      weight: 5
+                    - gp_ciclnes:
+                      name: 'Grado de peligro por ciclones tropicales'
+                      table: 'clean.cenapred'
+                      direction: negativo
+                      type: categorica
+                      weight: 5
 
             fenomenos_geologicos:
             - name: 'Fenómeno Geológico'
