@@ -21,7 +21,7 @@ dodo <- function(type, dimensions){
             return(dodo(type, dimensions)
         }
     if (type == 'vars'){
-
+        
     }
 }
 
@@ -56,14 +56,17 @@ variable_block <- function(config, name) {
     type <- subconfig[[4]]$type
     weight <- subconfig[[5]]$weight
     treatment <- try(subconfig[[6]]$treatment)
-    # Read from table
+    # Read variable from table
     table_name <- stringr::str_split(table_name, '\\.')
     con <- prev_connect()
-    var <- large_table(con, table_name[1], table_name[2])
+    var <- dplyr::tbl(con, dbplyr::in_schema(table_name[1], table_name[2])) %>%
+        select(!! name)
 
-    if treatment {
-        return eval(treatment)
+    # Apply treatment if needed
+    if ( !is.na(treatment)) {
+        var <- eval(treatmente)
     }
+
 }
 
 dim_block <- function(config, name) {
