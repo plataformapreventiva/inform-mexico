@@ -1,0 +1,57 @@
+
+save_plots_path: 'plots/'
+
+histograms:
+    - coneval
+
+boxplots:
+    label: cenapred
+    values: coneval
+
+corplot: coneval
+
+
+#################
+# Define tables
+# ###############
+
+coneval:
+    schema: semantic
+    nivel: municipal
+    tipo: porcentaje
+    #    anio: 2014
+    variable:
+        #- ic_sbv
+        #- ic_ali
+        #- ic_segsoc
+        #- ic_asalud
+        #- ic_cv
+        #- ic_rezedu
+        #- int_pob
+        #- int_pobe
+        #- prof_bm1
+        #- prof_b1
+        #- carencias
+        #- carencias3
+        - vul_car
+        - vul_ing
+        - pobreza
+        - pobreza_e
+        - pobreza_m
+
+cenapred:
+    schema: tidy
+    variable:
+        - gp_bajaste
+        - gp_ciclnes
+        - gp_granizo
+        - gp_inundac
+        - gp_nevadas
+        - gp_sequia2
+        - gp_sismico
+        - gp_susinfl
+        - gp_sustox
+        - gp_tormele
+        - gp_tsunami
+        - gp_ondasca
+
