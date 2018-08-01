@@ -21,6 +21,7 @@ dotenv::load_dot_env("../.env")
 schema <- 'clean'
 table_name <- 'coneval_municipios'
 data_date <- '2016-a'
+output_dir <- getwd()
 ## TODO: agregar filtros y selects para el reporte
 ```
 
@@ -37,7 +38,8 @@ df <-  dplyr::tbl(con, dbplyr::in_schema(schema, table_name)) %>%
 
 ```{r pressure}
 output_file <- glue('{table_name}.html')
-create_report(data = df , output_file = output_file)
+output_dir <- glue('{output_dir}/plots/reports/')
+create_report(data = df , output_file = output_file, output_dir = output_dir)
 ```
 
 
