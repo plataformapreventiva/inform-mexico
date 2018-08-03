@@ -1,0 +1,84 @@
+---
+title: "municipios_matrix_creation"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+options(scipen=10000)
+source("../utils.R")
+```
+
+```{CONEVAL 2015}
+# dbrsocial::clear_results(connection = con)
+coneval <- load_table(con,clean,coneval_municipios) %>% retrieve_result() %>%
+  filter(data_date == "2015-a")
+```
+
+```{CENAPRED}
+cenapred <- load_table(con,clean,cenapred_app_municipios) %>% retrieve_result()
+cenapred_amenazas <- cenapred %>% 
+  select(gp_inundac,gp_sequia2,gp_bajaste,gp_ciclnes,g_suscelad,gp_sismico,gp_tsunami)
+```
+
+```{INTERCENSAL}
+intercensal <- load_table(con,public,intercensal_mun_2015) %>% retrieve_result()
+```
+
+```{ENUT}
+#Tiempo destinado a trabajo no remunerado, Brecha promedio de horas de trabajo de cuidados
+cuidados <-load_table(con, raw,enut_cuidados) %>% retrieve_result()
+```
+
+```{ENIGH}
+concentrados <-load_table(con, clean, enigh_concentrados) %>% retrieve_result()
+hogares <-load_table(con,clean, enigh_hogares) %>% retrieve_result()
+ingresos <-load_table(con, clean, enigh_ingresos) %>% retrieve_result()
+poblacion <-load_table(con, clean, enigh_poblacion) %>% retrieve_result()
+trabajos <-load_table(con, clean, enigh_trabajos) %>% retrieve_result()
+viviendas <-load_table(con, clean, enigh_viviendas) %>% retrieve_result()
+carencias <-load_table(con, features, enigh_carencias) %>% retrieve_result()
+ingreso <-load_table(con, features, enigh_ingreso) %>% retrieve_result()
+gasto_hogar <-load_table(con, raw, enigh_gastohogar) %>% retrieve_result()
+gasto_personas <-load_table(con, raw, enigh_gastopersonas) %>% retrieve_result()
+```
+
+```{HOSPITALES}
+# Densidad de Medicos, Densidad de camas, Densidad de Hospitales
+hospitales <- load_table(con,raw,recursos_hospitales) %>% retrieve_result()
+#hospitales %>% head()
+```
+
+```{INTERNET}
+internet <- load_table(con,raw,internet_municipios) %>% retrieve_result()
+internet_h <- internet %>% select(pct_viv_con_internet)
+```
+
+```{USUARIOS CFE}
+cfe <- load_table(con,raw,cfe) %>% retrieve_result()
+u_cfe <- internet %>% select(num)
+```
+
+```{ATLAS COMPLEJIDAD}
+#Complejidad Economica, Diversificación Económica, Productividad de la tierra
+complejidad <- load_table(con,raw,altas_complejidad_industrias) %>% retrieve_result()
+```
+
+```{DELITOS}
+# -- No existe la base
+delitos <-load_table(con, clean, municipal_delitos) %>% retrieve_result()
+dbrsocial::clear_results(connection = con)
+```
+
+```{INDICADORES FINANCIEROS}
+# Flexibilidad financiera, Capacidad de Inversión
+indicadores <- load_table(con,raw,indicadores_financieros_municipios) %>% retrieve_result()
+ind_fin <- indicadores %>% select(flexibilidad_financiera,capacidad_inversion)
+```
+
+```{ÍNDICE REGLAMENTACIÓN BÁSICA}
+indice_reglamentacion_c <- load_table(con,raw,indice_reglamentacion_municipios) %>% retrieve_result()
+indice_reglamentacion_c %>% head()
+indice <- indice_reglamentacion_c %>% select(grado,indice)
+```
+
+
