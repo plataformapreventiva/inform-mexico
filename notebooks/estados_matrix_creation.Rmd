@@ -1,0 +1,49 @@
+---
+title: "estados_matrix_creation"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+options(scipen=10000)
+source("../utils.R")
+```
+
+
+###########################################################################
+AMENAZAS
+###########################################################################
+
+```{INPC}
+inpc_c <- load_table(con,clean,inpc_estado) %>% retrieve_result()
+inpc <- inpc_c %>%
+  select(inpc_c)
+```
+* Base mal ingestada
+
+```{SISTEMA DE ALERTAS}
+#Endeudamiento neto, Liquidez
+sistema_alertas<-load_table(con, raw, sistemas_alertas) %>% retrieve_result()
+dbrsocial::clear_results(connection = con)
+```
+
+###########################################################################
+CAPACIDADES
+###########################################################################
+
+```{JUECES}
+#por cada cien mil habitantes
+jueces <-load_table(con, raw, inegi_jueces) %>% retrieve_result()
+```
+
+```{AGENTES FISCALES}
+#por cada cien mil habitantes
+agentes_fiscales <-load_table(con, raw, inegi_agentes_fiscales) %>% retrieve_result()
+```
+
+```{Matriz}
+c_matriz <- join(jueces, agentes_fiscales)
+```
+
+###########################################################################
+VULNERABILIDADES
+###########################################################################
