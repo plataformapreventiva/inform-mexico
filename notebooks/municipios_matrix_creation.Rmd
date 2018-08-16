@@ -13,10 +13,10 @@ AMENAZAS
 ###########################################################################
 
 ```{CENAPRED}
-cenapred <- large_table(con,clean,cenapred_app_municipios) %>% retrieve_result()
-cenapred_amenazas <- cenapred %>% 
-  select(gp_inundac,gp_sequia2,gp_bajaste,gp_ciclnes,g_suscelad,gp_sismico,gp_tsunami)
-rm(cenapred)
+cenapred <- large_table(con,clean,cenapred_app_municipios) %>%
+  select(cve_muni,gp_inundac,gp_sequia2,gp_bajaste,gp_ciclnes,g_suscelad,gp_sismico,gp_tsunami) %>%
+  retrieve_result()
+cenapred$cve_muni <- as.integer(cenapred$cve_muni)
 ```
 
 ```{INTERCENSAL}
@@ -29,6 +29,9 @@ delitos <-large_table(con, clean, municipal_delitos) %>% retrieve_result()
 * No existe la base (Moni)
 * En estados está la de inpc (mal)
 
+```{Matriz amenazas}
+a_uno <- left_join(intercensal,cenapred)
+```
 ###########################################################################
 CAPACIDADES
 ###########################################################################
@@ -108,17 +111,17 @@ def_g <- defunciones_grales %>% mutate(cve_muni= as.integer(paste0(ent_regis,mun
 rm(defunciones_grales)
 ```
 
-```{Matriz}
-c_uno <- join(cngmd_proteccion_civil,cngmd_predial)
-c_dos <-join(cngmd_agua_potable,cngmd_drenaje)
-c_tres <- join(c_uno,c_dos)
-c_cuatro <- join(indice,c_tres)
-c_cinco <- join(ind_fin,c_cuatro)
-c_seis <- join(complejidad,c_cinco)
-c_siete <- join(internet_h,c_seis)
-c_ocho <- join(c_siete, cngmd_recoleccion_basura)
-c_nueve <-join(c_ocho, hosp)
-c_matriz <-join(c_nueve, def_g)
+```{Matriz capacidades}
+c_uno <- left_join(cngmd_proteccion_civil,cngmd_predial)
+c_dos <-left_join(cngmd_agua_potable,cngmd_drenaje)
+c_tres <- left_join(c_uno,c_dos)
+c_cuatro <- left_join(indice,c_tres)
+c_cinco <- left_join(ind_fin,c_cuatro)
+c_seis <- left_join(complejidad,c_cinco)
+c_siete <- left_join(internet_h,c_seis)
+c_ocho <- left_join(c_siete, cngmd_recoleccion_basura)
+c_nueve <-left_join(c_ocho, hosp)
+c_matriz <-left_join(c_nueve, def_g)
 
 
 rm(c_uno,c_dos,c_tres,c_cuatro,c_cinco,c_seis,c_siete,c_ocho,c_ocho,complejidad,cngmd_proteccion_civil,cngmd_predial,cngmd_agua_potable,cngmd_drenaje,indice,ind_fin, internet_h,cngmd_recoleccion_basura,u_cfe,hosp,c_nueve,def_g)
@@ -132,37 +135,56 @@ VULNERABILIDADES
 #dbrsocial::clear_results(connection = con)
 coneval <- large_table(con,clean,coneval_municipios) %>% retrieve_result() %>%
   filter(data_date == "2015-a")
+coneval$cve_muni <- as.integer(coneval$cve_muni)
 ```
 
 ```{INTERCENSAL}
-intercensal <- large_table(con,public,intercensal_mun_2015) %>% retrieve_result()
+intercensal <- large_table(con,public,intercensal_mun_2015) %>% mutate(cve_muni= as.integer(paste0(ent,mun))) %>% retrieve_result()
 ```
 
 ```{ENUT}
 #Tiempo destinado a trabajo no remunerado, Brecha promedio de horas de trabajo de cuidados
 cuidados <-large_table(con, raw,enut_cuidados) %>% retrieve_result()
 ```
+* Volver a hacer la ingesta con la cve_muni
 
 ```{ENIGH}
-concentrados <-large_table(con, clean, enigh_concentrados) 
-hogares <-large_table(con,clean, enigh_hogares) 
-ingresos <-large_table(con, clean, enigh_ingresos) 
-ingreso <-large_table(con, features, enigh_ingreso)
-poblacion <-large_table(con, clean, enigh_poblacion) 
-trabajos <-large_table(con, clean, enigh_trabajos) 
-viviendas <-large_table(con, clean, enigh_viviendas) 
-carencias <-large_table(con, features, enigh_carencias) 
-gasto_hogar <-large_table(con, raw, enigh_gastohogar)
-gasto_personas <-large_table(con, raw, enigh_gastopersonas) 
+concentrados <-large_table(con, clean, enigh_concentrados) %>% retrieve_result()
+hogares <-large_table(con,clean, enigh_hogares) %>% retrieve_result()
+ingresos <-large_table(con, clean, enigh_ingresos) %>% retrieve_result()
+ingreso <-large_table(con, features, enigh_ingreso) %>% retrieve_result()
+poblacion <-large_table(con, clean, enigh_poblacion) %>% retrieve_result()
+trabajos <-large_table(con, clean, enigh_trabajos) %>% retrieve_result()
+viviendas <-large_table(con, clean, enigh_viviendas) %>% retrieve_result()
+carencias <-large_table(con, features, enigh_carencias) %>% retrieve_result()
+gasto_hogar <-large_table(con, raw, enigh_gastohogar) %>% retrieve_result()
+gasto_personas <-large_table(con, raw, enigh_gastopersonas) %>% retrieve_result()
 
-enigh1 <- left_join(concentrados,hogares) %>% compute()
-enigh2 <- left_join(ingreso,ingresos) %>% compute()
-enigh3 <- left_join(poblacion,trabajos) %>% compute()
-enigh4 <- left_join(carencias,viviendas) %>% compute()
-enigh5 <- left_join(gasto_personas,gasto_hogar) %>% compute()
+concentrados$factor_hog <- as.integer(concentrados$factor_hog)
+gasto_hogar$costo <- as.numeric(gasto_hogar$costo)
+gasto_hogar$gasto_nm <- as.numeric(gasto_hogar$gasto_nm)
+gasto_personas$gasto <- as.integer(gasto_personas$gasto)
+gasto_personas$gasto_tri <- as.numeric(gasto_personas$gasto_tri)
 
-enigh6 <- left_join(enigh1,enigh2) %>% compute()
-enigh7 <- left_join(enigh3,enigh4) %>% compute()
-enigh8 <- left_join(enigh5,enigh6) %>% compute()
-enigh9 <- left_join(enigh7,enigh8) %>% collect()
+enigh1 <- left_join(concentrados,hogares) 
+enigh2 <- left_join(ingreso,ingresos) 
+enigh3 <- left_join(poblacion,trabajos) 
+enigh4 <- left_join(carencias,viviendas) 
+enigh5 <- left_join(gasto_personas,gasto_hogar) 
+
+enigh6 <- left_join(enigh1,enigh2)
+enigh7 <- left_join(enigh3,enigh4)
+
+enigh5$material <- as.numeric(enigh5$material)
+enigh8 <- left_join(enigh5,enigh6)
+
+enigh7$ubica_geo <- as.integer(enigh7$ubica_geo)
+enigh <- left_join(enigh7,enigh8)
+
+rm(concentrados,hogares,ingreso,ingresos,gasto_hogar,gasto_personas,carencias,viviendas,trabajos,poblacion,enigh1,enigh2,enigh3,enigh4,enigh5,enigh6,enigh7,enigh8)
+```
+* a nivel hogares
+
+```{Matriz vulnerabilidades}
+v_uno <- left_join(intercensal,coneval)
 ```
