@@ -3,7 +3,7 @@ title: "municipios_matrix_creation"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r}
 options(scipen=10000)
 source("../utils.R")
 ```
@@ -11,67 +11,83 @@ source("../utils.R")
 ###########################################################################
 AMENAZAS
 ###########################################################################
-
-```{CENAPRED}
-cenapred <- large_table(con,clean,cenapred_app_municipios) %>%
-  select(cve_muni,gp_inundac,gp_sequia2,gp_bajaste,gp_ciclnes,g_suscelad,gp_sismico,gp_tsunami) %>%
-  retrieve_result()
-cenapred$cve_muni <- as.integer(cenapred$cve_muni)
-```
-
-```{INTERCENSAL}
-intercensal <- large_table(con,public,intercensal_mun_2015) %>% retrieve_result()
-```
-
-```{DELITOS}
-delitos <-large_table(con, clean, municipal_delitos) %>% retrieve_result()
-```
+## TODO
 * No existe la base (Moni)
 * En estados está la de inpc (mal)
 
-```{Matriz amenazas}
-a_uno <- left_join(intercensal,cenapred)
+
+
+```{r, results = "hide"}
+# Cenapred 
+cenapred <- large_table(con,clean,cenapred_app_municipios) %>%
+  select(cve_muni,gp_inundac,gp_sequia2,gp_bajaste,gp_ciclnes,g_suscelad,gp_sismico,gp_tsunami) %>%  
+  mutate(cve_muni = as.integer(cve_muni))
+
+# Intercensal 2015
+intercensal <- large_table(con,raw, intercensal_persona_2015) %>%
+  select(ent,mun, numper) %>% group_by(ent, mun) %>%
+  dplyr::summarise(numper = sum(numper)) %>%
+  mutate(cve_muni= as.integer(paste0(ent,mun)))
+
+#delitos <-large_table(con, clean, municipal_delitos) 
+
+# Join
+amenazas <- left_join(intercensal,cenapred, by="cve_muni")  %>%
+  left_join(delitos, by="cve_muni")
+
+# Construcción de Variables
+amenazas %>% 
+  mutate(tasa_hom_hab = delitos/poblacion)
+
+# Subset a los índices
+amenazas %>% select(tasa_hom_hab) %>% 
+  retrieve_result()
+
+# Generación de Reporte
+create_reports(amenazas, 
+               task_name = "amenazas", 
+               output_dir = "../eda/reportes/amenazas")
 ```
+
+
+
 ###########################################################################
 CAPACIDADES
 ###########################################################################
 
-```{USUARIOS CFE}
-cfe <- large_table(con,raw,cfe) %>% retrieve_result()
-u_cfe <- cfe %>% select(cveedo,cvemun,num)
-rm(cfe)
-u_cfe$cvemun <- as.integer(u_cfe$cvemun)
+```{r}
+cfe <- large_table(con,raw,cfe) %>% 
+  select(cveedo,cvemun,num) %>% 
+  mutate(cvemun = as.integer(cvemun))
 ```
 
-```{INTERNET}
-internet <- large_table(con,raw,internet_municipios) %>% retrieve_result()
-internet_h <- internet %>% select(cve_muni,pct_viv_con_internet)
-rm(internet)
-internet_h$cve_muni <- as.integer(internet_h$cve_muni)
+```{r}
+internet <- large_table(con,raw,internet_municipios) %>% 
+  select(cve_muni,pct_viv_con_internet) %>% 
+  mutate(cve_muni = as.integer(cve_muni))
 ```
 
-```{ATLAS COMPLEJIDAD}
+```{r}
 #Complejidad Economica, Diversificación Económica, Productividad de la tierra
-complejidad <- large_table(con,raw,complejidad_municipios) %>% retrieve_result()
-complejidad$cve_muni <- as.integer(complejidad$cve_muni)
+complejidad <- large_table(con,raw,complejidad_municipios) %>% 
+  mutate(cve_muni = as.integer(cve_muni))
 ```
 
-```{INDICADORES FINANCIEROS}
+```{r}
 # Flexibilidad financiera, Capacidad de Inversión
-indicadores <- large_table(con,raw,indicadores_financieros_municipios) %>% retrieve_result()
-ind_fin <- indicadores %>% select(cve_muni,flexibilidad_financiera,capacidad_inversion)
-rm(indicadores)
+indicadores <- large_table(con,raw,indicadores_financieros_municipios) %>%
+  %>% select(cve_muni,flexibilidad_financiera,capacidad_inversion) %>%
 ind_fin$cve_muni<- as.integer(ind_fin$cve_muni)
 ```
 
-```{ÍNDICE REGLAMENTACIÓN BÁSICA}
+```{r}
 indice_reglamentacion_c <- large_table(con,raw,indice_reglamentacion_municipios) %>% retrieve_result()
 indice <- indice_reglamentacion_c %>% select(cve_muni,grado,indice)
 rm(indice_reglamentacion_c)
 indice$cve_muni<- as.integer(indice$cve_muni)
 ```
 
-```{CNGMD}
+```{r}
 #Censo Nacional de Gobiernos Municipales y Delegacionales
 cngmd_proteccion_civil <- large_table(con,raw,cngmd_proteccion_civil) %>% retrieve_result()
 cngmd_proteccion_civil <- cngmd_proteccion_civil[,-c(17,18)]
@@ -96,7 +112,7 @@ cngmd_recoleccion_basura <- cngmd_recoleccion_basura[,-c(85,86)]
 
 ```
 
-```{HOSPITALES}
+```{r}
 # Densidad de Medicos, Densidad de camas, Densidad de Hospitales
 hospitales <- large_table(con,raw,recursos_hospitales) %>% retrieve_result() 
 hospitales$clavemunicipio <- str_pad(hospitales$clavemunicipio,3,"left",'0')
@@ -104,14 +120,14 @@ hosp <- hospitales %>% mutate(cve_muni= as.integer(paste0(claveentidad,clavemuni
 rm(hospitales)
 ```   
 
-```{DEFUNCIONES}
+```{r}
 defunciones_grales <- large_table(con,raw,defunciones_generales) %>% retrieve_result()
 defunciones_grales$mun_regis <- str_pad(defunciones_grales$mun_regis,3,"left",'0')
 def_g <- defunciones_grales %>% mutate(cve_muni= as.integer(paste0(ent_regis,mun_regis)))
 rm(defunciones_grales)
 ```
 
-```{Matriz capacidades}
+```{r}
 c_uno <- left_join(cngmd_proteccion_civil,cngmd_predial)
 c_dos <-left_join(cngmd_agua_potable,cngmd_drenaje)
 c_tres <- left_join(c_uno,c_dos)
@@ -131,24 +147,24 @@ rm(c_uno,c_dos,c_tres,c_cuatro,c_cinco,c_seis,c_siete,c_ocho,c_ocho,complejidad,
 VULNERABILIDADES
 ###########################################################################
 
-```{CONEVAL 2015}
+```{r}
 #dbrsocial::clear_results(connection = con)
 coneval <- large_table(con,clean,coneval_municipios) %>% retrieve_result() %>%
   filter(data_date == "2015-a")
 coneval$cve_muni <- as.integer(coneval$cve_muni)
 ```
 
-```{INTERCENSAL}
+```{r}
 intercensal <- large_table(con,public,intercensal_mun_2015) %>% mutate(cve_muni= as.integer(paste0(ent,mun))) %>% retrieve_result()
 ```
 
-```{ENUT}
+```{r}
 #Tiempo destinado a trabajo no remunerado, Brecha promedio de horas de trabajo de cuidados
 cuidados <-large_table(con, raw,enut_cuidados) %>% retrieve_result()
 ```
 * Volver a hacer la ingesta con la cve_muni
 
-```{ENIGH}
+```{r}
 concentrados <-large_table(con, clean, enigh_concentrados) %>% retrieve_result()
 hogares <-large_table(con,clean, enigh_hogares) %>% retrieve_result()
 ingresos <-large_table(con, clean, enigh_ingresos) %>% retrieve_result()
@@ -185,6 +201,6 @@ rm(concentrados,hogares,ingreso,ingresos,gasto_hogar,gasto_personas,carencias,vi
 ```
 * a nivel hogares
 
-```{Matriz vulnerabilidades}
+```{r}
 v_uno <- left_join(intercensal,coneval)
 ```
