@@ -12,10 +12,8 @@ source("../utils.R")
 AMENAZAS
 ###########################################################################
 ## TODO
-* No existe la base (Moni)
 * En estados está la de inpc (mal)
-
-
+* Checar ingesta de delitos (Moni), cngmd_transparencia y cngmd_participacion_ciudadana (yo). "No existen"
 
 ```{r, results = "hide"}
 # Cenapred 
@@ -32,16 +30,16 @@ intercensal <- large_table(con,raw, intercensal_persona_2015) %>%
 #delitos <-large_table(con, clean, municipal_delitos) 
 
 # Join
-amenazas <- left_join(intercensal,cenapred, by="cve_muni")  %>%
-  left_join(delitos, by="cve_muni")
+amenazas <- left_join(intercensal,cenapred, by="cve_muni")
+  #left_join(delitos, by="cve_muni")
 
 # Construcción de Variables
-amenazas %>% 
-  mutate(tasa_hom_hab = delitos/poblacion)
+#amenazas %>% 
+  #mutate(tasa_hom_hab = delitos/poblacion)
 
 # Subset a los índices
-amenazas %>% select(tasa_hom_hab) %>% 
-  retrieve_result()
+#amenazas %>% select(tasa_hom_hab) %>% 
+  #retrieve_result()
 
 # Generación de Reporte
 create_reports(amenazas, 
@@ -55,92 +53,83 @@ create_reports(amenazas,
 CAPACIDADES
 ###########################################################################
 
-```{r}
+```{r,, results = "hide"}
+# CFE 
 cfe <- large_table(con,raw,cfe) %>% 
   select(cveedo,cvemun,num) %>% 
-  mutate(cvemun = as.integer(cvemun))
-```
+  mutate(cve_muni = as.integer(cvemun))
 
-```{r}
+# Internet
 internet <- large_table(con,raw,internet_municipios) %>% 
   select(cve_muni,pct_viv_con_internet) %>% 
   mutate(cve_muni = as.integer(cve_muni))
-```
 
-```{r}
 #Complejidad Economica, Diversificación Económica, Productividad de la tierra
 complejidad <- large_table(con,raw,complejidad_municipios) %>% 
   mutate(cve_muni = as.integer(cve_muni))
-```
 
-```{r}
 # Flexibilidad financiera, Capacidad de Inversión
-indicadores <- large_table(con,raw,indicadores_financieros_municipios) %>%
-  %>% select(cve_muni,flexibilidad_financiera,capacidad_inversion) %>%
-ind_fin$cve_muni<- as.integer(ind_fin$cve_muni)
-```
+indicadores_finanzas <- large_table(con,raw,indicadores_financieros_municipios) %>%
+ select(cve_muni,flexibilidad_financiera,capacidad_inversion) %>%
+ mutate(cve_muni = as.integer(cve_muni))
 
-```{r}
-indice_reglamentacion_c <- large_table(con,raw,indice_reglamentacion_municipios) %>% retrieve_result()
-indice <- indice_reglamentacion_c %>% select(cve_muni,grado,indice)
-rm(indice_reglamentacion_c)
-indice$cve_muni<- as.integer(indice$cve_muni)
-```
+# Índice de Reglamentación
+indice_reglamentacion <- large_table(con,raw,indice_reglamentacion_municipios) %>%
+  select(cve_muni,grado,indice) %>%
+  mutate(cve_muni = as.integer(cve_muni))
 
-```{r}
+# Densidad de Medicos, Densidad de camas, Densidad de Hospitales
+hospitales <- large_table(con,raw,recursos_hospitales) %>% 
+  mutate(clavemunicipio = str_pad(clavemunicipio,3,"left",'0')) %>% 
+  mutate(cve_muni= as.integer(paste0(claveentidad,clavemunicipio)))
+
+# Defunciones
+defunciones_grales <- large_table(con,raw,defunciones_generales) %>% 
+  mutate(mun_regis = str_pad(mun_regis,3,"left",'0')) %>% 
+  mutate(cve_muni= as.integer(paste0(ent_regis,mun_regis)))
+
 #Censo Nacional de Gobiernos Municipales y Delegacionales
-cngmd_proteccion_civil <- large_table(con,raw,cngmd_proteccion_civil) %>% retrieve_result()
-cngmd_proteccion_civil <- cngmd_proteccion_civil[,-c(17,18)]
+cngmd_proteccion_civil <- large_table(con,raw,cngmd_proteccion_civil) %>%
+  mutate(cve_muni = as.integer(ubic_geo))
 
-cngmd_drenaje <- large_table(con,raw,cngmd_drenaje) %>% retrieve_result()
-cngmd_drenaje <- cngmd_drenaje[,-c(15,16)]
+cngmd_drenaje <- large_table(con,raw,cngmd_drenaje) %>%
+  mutate(cve_muni = as.integer(aps_folio))
 
-cngmd_agua_potable <- large_table(con,raw,cngmd_agua_potable) %>% retrieve_result()
-cngmd_agua_potable <- cngmd_agua_potable[,-c(4,5)]
+cngmd_agua_potable <- large_table(con,raw,cngmd_agua_potable)  %>%
+  mutate(cve_muni = as.integer(aps_folio))
 
-cngmd_predial <- large_table(con,raw,cngmd_predial) %>% retrieve_result()
-cngmd_predial <- cngmd_predial[-c(6,7)]
+cngmd_predial <- large_table(con,raw,cngmd_predial) %>%
+  mutate(cve_muni = as.integer(ubic_geo))
 
-cngmd_recoleccion_basura <- large_table(con,raw,cngmd_recoleccion_basura) %>% retrieve_result() 
-cngmd_recoleccion_basura <- cngmd_recoleccion_basura[,-c(85,86)]
+cngmd_recoleccion_basura <- large_table(con,raw,cngmd_recoleccion_basura) %>%
+  mutate(cve_muni = as.integer(rsu_folio))
 
-#cngmd_transparencia <- large_table(con,raw,cngmd_transparencia) %>% retrieve_result()
+#cngmd_transparencia <- large_table(con,raw,cngmd_transparencia)
 #cngmd_transparencia <- cngmd_transparencia[,-c()]
 
 #cngmd_participacion_ciudadana <- large_table(con,raw,cngmd_participacion_ciudadana) %>% retrieve_result()
 #cngmd_participacion_ciudadana <-cngmd_participacion_ciudadana[,-c()]
 
-```
+# Join
+capacidades1 <- left_join(cfe,internet,complejidad, by=c("cve_muni"))
+capacidades2 <- left_join(capacidades1,indice_reglamentacion,indicadores_finanzas, by=c("cve_muni"))
+capacidades3 <- left_join(hospitales,defunciones_grales, cngmd_proteccion_civil, by=c("cve_muni"))
+capacidades4 <- left_join(cngmd_drenaje,cngmd_agua_potable,cngmd_predial, by=c("cve_muni"))
+capacidades5 <- left_join(cngmd_recoleccion_basura, capacidades1,capacidades2,by=c("cve_muni"))
+capacidades <- left_join(capacidades3,capacidades4,capacidades5,by=c("cve_muni"))
 
-```{r}
-# Densidad de Medicos, Densidad de camas, Densidad de Hospitales
-hospitales <- large_table(con,raw,recursos_hospitales) %>% retrieve_result() 
-hospitales$clavemunicipio <- str_pad(hospitales$clavemunicipio,3,"left",'0')
-hosp <- hospitales %>% mutate(cve_muni= as.integer(paste0(claveentidad,clavemunicipio)))
-rm(hospitales)
-```   
+# Construcción de Variables
+# capacidades %>% 
+  #mutate(tasa_hom_hab = delitos/poblacion)
 
-```{r}
-defunciones_grales <- large_table(con,raw,defunciones_generales) %>% retrieve_result()
-defunciones_grales$mun_regis <- str_pad(defunciones_grales$mun_regis,3,"left",'0')
-def_g <- defunciones_grales %>% mutate(cve_muni= as.integer(paste0(ent_regis,mun_regis)))
-rm(defunciones_grales)
-```
+# Subset a los índices
+#capacidades %>% select(tasa_hom_hab) %>% 
+  #retrieve_result()
 
-```{r}
-c_uno <- left_join(cngmd_proteccion_civil,cngmd_predial)
-c_dos <-left_join(cngmd_agua_potable,cngmd_drenaje)
-c_tres <- left_join(c_uno,c_dos)
-c_cuatro <- left_join(indice,c_tres)
-c_cinco <- left_join(ind_fin,c_cuatro)
-c_seis <- left_join(complejidad,c_cinco)
-c_siete <- left_join(internet_h,c_seis)
-c_ocho <- left_join(c_siete, cngmd_recoleccion_basura)
-c_nueve <-left_join(c_ocho, hosp)
-c_matriz <-left_join(c_nueve, def_g)
-
-
-rm(c_uno,c_dos,c_tres,c_cuatro,c_cinco,c_seis,c_siete,c_ocho,c_ocho,complejidad,cngmd_proteccion_civil,cngmd_predial,cngmd_agua_potable,cngmd_drenaje,indice,ind_fin, internet_h,cngmd_recoleccion_basura,u_cfe,hosp,c_nueve,def_g)
+# Generación de Reporte
+create_reports(capacidades, 
+               task_name = "capacidades", 
+               output_dir = "../eda/reportes/capacidades")
 ```
 
 ###########################################################################
