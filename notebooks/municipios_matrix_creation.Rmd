@@ -12,9 +12,8 @@ source("../utils.R")
 AMENAZAS
 ###########################################################################
 ## TODO
-* En estados está la de inpc (mal)
-* Checar ingesta de sitemas_alertas, scngmd_transparencia y cngmd_participacion_ciudadana. "No existen"
 * Checar bien las variables de complejidad
+* Pedir código delitos a Moni
 
 ```{r, results = "hide"}
 # Cenapred 
@@ -28,28 +27,15 @@ intercensal <- large_table(con,raw, intercensal_persona_2015) %>%
   dplyr::summarise(numper = sum(numper)) %>%
   mutate(cve_muni= as.integer(paste0(ent,mun))) %>% retrieve_result()
 
+# Migración interna y externa
+# Poblaciones flotantes
+
 # Delitos
-delitos <-large_table(con,raw, delitos_comun) %>%
-  select(cve_muni,bienjuridicoafectado,tipodedelito,subtipodedelito,modalidad,incidencia_delictiva)%>% retrieve_result()
+
 
 # Join
-amenazas <- left_join(intercensal,cenapred,delitos, by="cve_muni")
-
-# Construcción de Variables
-# 1. Número de homicidios por 100 mil habitantes. (Dolosos)
-# 2. Número de homicidios por 100 mil habitantes. (Culposos)
-# 3. Número de secuestros por 100 mil habitantes
-# 4. Número de delitos por 100 mil habitantes
-# 5. Número de robo de vehículos por 100 mil habitantes
-# 6. Número de Feminicidios por 100 mil habitantes
-# 7. Numero de delitos del tipo violencia familiar por 100 mil habitantes
-
-#EJ amenazas %>% 
-  #mutate(tasa_hom_hab = delitos/poblacion)
-
-# Subset a los índices
-#amenazas %>% select(tasa_hom_hab) %>% 
-  #retrieve_result()
+amenazas <- cenapred
+#amenazas <- left_join(intercensal,cenapred,delitos, by="cve_muni")
 
 # Generación de Reporte
 create_reports(amenazas, 
@@ -126,6 +112,7 @@ cngmd_drenaje <- large_table(con,raw,cngmd_drenaje) %>%
   mutate(cve_muni = as.character(aps_folio),cobertura_dren=(sd_dren_cab+sd_dren_resto)/2)  %>%
   select(cve_muni,cobertura_dren)
 
+
 cngmd_predial <- large_table(con,raw,cngmd_predial) %>%
   mutate(cve_muni = as.character(ubic_geo)) %>%
   select(cve_muni,aut_cobr,totalpo1)
@@ -151,10 +138,10 @@ capacidades <- capacidades %>%
   left_join(defunciones_grales, by="cve_muni") %>%
   left_join(cfe, by="cve_muni") %>%
   left_join(aux, by="cve_muni") %>%
-  left_join(hospitales, by="cve_muni")
+  left_join(hospitales, by="cve_muni") 
 
 # Generación de Reporte
-create_reports(capacidades, 
+create_reports(capacidades %>% select(-totalpo1), 
                task_name = "capacidades", 
                output_dir = "../eda/reportes/capacidades")
 ```
