@@ -12,8 +12,9 @@ source("../utils.R")
 AMENAZAS
 ###########################################################################
 ## TODO
-* Checar bien las variables de complejidad
-* Pedir código delitos a Moni
+* Checar ingesta de cngmd_participacion_ciudadana. Según Luigi todo está pero no.
+* Delitos la hizo Moni
+* Hacer tidy la de cngmd_transparencia.
 
 ```{r, results = "hide"}
 # Cenapred 
@@ -112,20 +113,24 @@ cngmd_drenaje <- large_table(con,raw,cngmd_drenaje) %>%
   mutate(cve_muni = as.character(aps_folio),cobertura_dren=(sd_dren_cab+sd_dren_resto)/2)  %>%
   select(cve_muni,cobertura_dren)
 
-
 cngmd_predial <- large_table(con,raw,cngmd_predial) %>%
   mutate(cve_muni = as.character(ubic_geo)) %>%
   select(cve_muni,aut_cobr,totalpo1)
 
 cngmd_recoleccion_basura <- large_table(con,raw,cngmd_recoleccion_basura) %>%
-  mutate(cve_muni = as.character(rsu_folio)) %>% 
-  select(cve_muni,basura_porcent_cab)
+  mutate(cve_muni = as.character(rsu_folio)) %>% select(cve_muni,basura_porcent_cab)
 
-#cngmd_transparencia <- large_table(con,raw,cngmd_transparencia)
-#cngmd_transparencia <- cngmd_transparencia[,-c()]
+cngmd_transparencia1 <- large_table(con,raw,cngmd_transparencia) %>%
+  mutate(cve_muni = as.character(ubic_geo)) %>%
+  select(cve_muni,inf_publ) %>% retrieve_result() %>% distinct() %>% group_by_at(vars(inf_publ))%>% mutate(i = row_number()) %>% spread(cve_muni,inf_publ)
 
-#cngmd_participacion_ciudadana <- large_table(con,raw,cngmd_participacion_ciudadana) %>% retrieve_result()
-#cngmd_participacion_ciudadana <-cngmd_participacion_ciudadana[,-c()]
+cngmd_transparencia2 <- large_table(con,raw,cngmd_transparencia) %>%
+  mutate(cve_muni = as.character(ubic_geo)) %>%
+  select(cve_muni,mec_tran) %>% retrieve_result() %>% distinct() %>% group_by_at(vars(mec_tran))%>% mutate(i = row_number()) %>% spread(mec_tran,cve_muni)
+
+cngmd_transparencia <- left_join(cngmd_transparencia1,cngmd_transparencia2,by = 'cve_uni')
+
+cngmd_participacion_ciudadana <- large_table(con,raw,cngmd_participacion_ciudadana)
 
 # Join
 capacidades <- left_join(complejidad,internet, by="cve_muni") %>%
