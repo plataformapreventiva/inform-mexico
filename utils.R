@@ -4,7 +4,7 @@ paquetines <- c("dbrsocial","ggplot2","tidyverse","plyr","scales",
                 "maptools","rgdal","ggmap","gridExtra","rgdal",
                 "Hmisc","rgeos","sp","sf","rgeos","broom","scales",
                 "rangeMapper","ggmap","plotly","viridis", "DataExplorer",
-                "glue","data.table", "stringr")
+                "glue","data.table", "stringr","gsubfn")
 no_instalados <- paquetines[!(paquetines %in% installed.packages()[,"Package"])]
 if(length(no_instalados)) install.packages(no_instalados)
 lapply(paquetines, library, character.only = TRUE)
