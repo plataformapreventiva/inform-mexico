@@ -7,43 +7,60 @@ output: html_document
 options(scipen=10000)
 source("../utils.R")
 ```
-
+## TODO 
+* La ingesta de inpc está mal, sólo toma 32 de las 46 ciudades. 
+* Checar ingesta de inegi_jueces. Pasa lo mismo que con cngmd_participacion_ciudadana.
 
 ###########################################################################
 AMENAZAS
 ###########################################################################
 
-```{INPC}
-inpc_c <- load_table(con,clean,inpc_estado) %>% retrieve_result()
-inpc <- inpc_c %>%
-  select(inpc_c)
-```
-* Base mal ingestada
+```{r, results = "hide"}
+# INPC
+inpc <- large_table(con,raw,inpc_estados) %>% 
+  filter(fecha == "2016-9")
 
-```{SISTEMA DE ALERTAS}
-#Endeudamiento neto, Liquidez
-sistema_alertas<-load_table(con, raw, sistemas_alertas) %>% retrieve_result()
-dbrsocial::clear_results(connection = con)
+# Sistema de alertas: liquidez y endeudamiento
+s_alertas <- large_table(con,raw,sistemas_alertas) %>% 
+  mutate(endeudamiento = (indicador1+indicador2+indicador3)/3,liquidez = 
+           ingresosdelibredisposicion/(pi+pi_2+obligacionesacortoplazoyproveedoresycontratistas),
+         nom_ent=entidadfederativa) %>% select(-entidadfederativa)
+s_alertas$nom_ent <- str_replace_all(s_alertas$nom_ent, c("Coahulia" = "Coahuila de Zaragoza","Ciudad de México" = "Distrito Federal","Coahuila" = "Coahuila de Zaragoza","Veracruz" = "Veracruz de Ignacio de la Llave","Michoacán" = "Michoacán de Ocampo"))
+cves <- large_table(con, raw,geom_estados) %>% select(cve_ent,nom_ent)
+sistema_alertas <- left_join(cves, s_alertas, by = "nom_ent")
+
+# Join
+amenazas_edo <- left_join(inpc, sistema_alertas, by = "cve_ent")
+  
+# Generación de Reporte
+create_reports(amenazas_edo, 
+               task_name = "amenazas_edo", 
+               output_dir = "../eda/reportes/amenazas")
 ```
 
 ###########################################################################
 CAPACIDADES
 ###########################################################################
 
-```{JUECES}
-#por cada cien mil habitantes
+```{r, results = "hide"}
+# Selección y Construcción de Variables
+
+# Jueces y agentes fiscales por cada cien mil habitantes
 jueces <-load_table(con, raw, inegi_jueces) %>% retrieve_result()
-```
-
-```{AGENTES FISCALES}
-#por cada cien mil habitantes
 agentes_fiscales <-load_table(con, raw, inegi_agentes_fiscales) %>% retrieve_result()
-```
 
-```{Matriz}
-c_matriz <- join(jueces, agentes_fiscales)
+# Join
+#capacidades_edo <- left_join(jueces, agentes_fiscales, by="cve_muni")
+capacidades_edo <- agentes_fiscales
+
+# Generación de Reporte
+create_reports(capacidades_edo, 
+               task_name = "capacidades_edo", 
+               output_dir = "../eda/reportes/capacidades")
 ```
 
 ###########################################################################
 VULNERABILIDADES
 ###########################################################################
+
+No hay a nivel estado
