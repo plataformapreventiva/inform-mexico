@@ -3,7 +3,7 @@ title: "municipios_matrix_creation"
 output: html_document
 ---
 
-```{r}
+```{r message=FALSE, warning=FALSE, results='hide'}
 options(scipen=10000)
 source("../utils.R")
 ```
@@ -155,9 +155,10 @@ VULNERABILIDADES
 
 ```{r}
 #dbrsocial::clear_results(connection = con)
-coneval <- large_table(con,clean,coneval_municipios) %>% retrieve_result() %>%
-  filter(data_date == "2015-a")
-coneval$cve_muni <- as.integer(coneval$cve_muni)
+coneval <- large_table(con,clean,coneval_municipios) %>%   
+filter(data_date == "2015-a") %>% 
+select(cve_muni, ic_rezedu_porcentaje, ic_asalud_porcentaje, ic_segsoc_porcentaje, ic_cv_porcentaje, vul_ing_porcentaje, ic_sbv_porcentaje, pobreza_porcentaje) %>% 
+mutate(cve_muni = as.integer(cve_muni)) %>% retrieve_result()
 ```
 
 ```{r}
