@@ -9,7 +9,6 @@ source("../utils.R")
 ```
 ## TODO 
 * La ingesta de inpc está mal, sólo toma 32 de las 46 ciudades. 
-* Checar ingesta de inegi_jueces. Pasa lo mismo que con cngmd_participacion_ciudadana.
 
 ###########################################################################
 AMENAZAS
@@ -18,24 +17,30 @@ AMENAZAS
 ```{r, results = "hide"}
 # INPC
 inpc <- large_table(con,raw,inpc_estados) %>% 
-  filter(fecha == "2016-9")
+  filter(fecha == "2016-9") %>% 
+  select(-fecha)
 
 # Sistema de alertas: liquidez y endeudamiento
 s_alertas <- large_table(con,raw,sistemas_alertas) %>% 
   mutate(endeudamiento = (indicador1+indicador2+indicador3)/3,liquidez = 
            ingresosdelibredisposicion/(pi+pi_2+obligacionesacortoplazoyproveedoresycontratistas),
          nom_ent=entidadfederativa) %>% select(-entidadfederativa)
-s_alertas$nom_ent <- str_replace_all(s_alertas$nom_ent, c("Coahulia" = "Coahuila de Zaragoza","Ciudad de México" = "Distrito Federal","Coahuila" = "Coahuila de Zaragoza","Veracruz" = "Veracruz de Ignacio de la Llave","Michoacán" = "Michoacán de Ocampo"))
-cves <- large_table(con, raw,geom_estados) %>% select(cve_ent,nom_ent)
-sistema_alertas <- left_join(cves, s_alertas, by = "nom_ent")
+s_alertas$nom_ent <- str_replace_all(s_alertas$nom_ent, c("Ciudad de México" = "Distrito Federal","Coahuila" = "Coahuila de Zaragoza","Veracruz" = "Veracruz de Ignacio de la Llave","Michoacán" = "Michoacán de Ocampo"))
+cves <- large_table(con, raw,geom_estados) %>% 
+  select(cve_ent,nom_ent)
+sistema_alertas <- left_join(cves, s_alertas, by = "nom_ent") %>% 
+  select(cve_ent,endeudamiento,liquidez)
 
 # Join
-amenazas_edo <- left_join(inpc, sistema_alertas, by = "cve_ent")
+amenazas_edo <- left_join(inpc, sistema_alertas, by = "cve_ent") %>% retrieve_result()
   
 # Generación de Reporte
-create_reports(amenazas_edo, 
+amenazas_numericas_edo <- na.omit(scale(select_if(amenazas_edo, is.numeric)))
+
+# Generación de Reporte
+create_reports(amenazas_numericas_edo %>% data.table(), 
                task_name = "amenazas_edo", 
-               output_dir = "../eda/reportes/amenazas")
+               output_dir = "../eda/reportes/amenazas") 
 ```
 
 ###########################################################################
@@ -45,13 +50,33 @@ CAPACIDADES
 ```{r, results = "hide"}
 # Selección y Construcción de Variables
 
+cves <- large_table(con, raw,geom_estados) %>% 
+  select(cve_ent,nom_ent)
 # Jueces y agentes fiscales por cada cien mil habitantes
-jueces <-load_table(con, raw, inegi_jueces) %>% retrieve_result()
-agentes_fiscales <-load_table(con, raw, inegi_agentes_fiscales) %>% retrieve_result()
+jueces <- large_table(con, raw, inegi_jueces) %>%
+  mutate(nom_ent=entidadfederativa) %>%
+  select(nom_ent,num_jueces)
+jueces$nom_ent <- str_replace_all(jueces$nom_ent, c("Ciudad de México" = "Distrito Federal","Ciudad de México" = "Distrito Federal"))
+inegi_jueces <- left_join(cves, jueces, by = "nom_ent") %>% select(-nom_ent)
+
+agentes_fiscales <- large_table(con, raw, inegi_agentes_fiscales) %>%
+  mutate(nom_ent=entidad_federativa) %>%
+  select(nom_ent,num_agentes_fiscales)
+agentes_fiscales$nom_ent <- str_replace_all(agentes_fiscales$nom_ent, c("Ciudad de México" = "Distrito Federal","Ciudad de México" = "Distrito Federal"))
+inegi_agentes_fiscales <- left_join(cves, agentes_fiscales, by = "nom_ent") %>% select(-nom_ent)
+
+# índice de sistema político estable y funcional
+periodistas <- large_table(con,raw,imco_periodistas)  %>% retrieve_result()
+equidad_congreso <- large_table(con,raw,imco_equidad_congreso) %>% retrieve_result()
+#corrupcion_estatal <- large_table(con,raw,imco_corrupcion_estatal)
+#corrupcion_partidos <- large_table(con,raw,imco_corrupcion_partidos)
+#corrupcion_sector <- large_table(con,raw,imco_corrupcion_sector)
+#info_publica <- large_table(con,raw,imco_info_publica)
+#equidad_congreso <- large_table(con,raw,imco_participacion_ciudadana)
+#equidad_congreso <- large_table(con,raw,imco_marimonio_igualitario)
 
 # Join
-#capacidades_edo <- left_join(jueces, agentes_fiscales, by="cve_muni")
-capacidades_edo <- agentes_fiscales
+capacidades_edo <- left_join(inegi_jueces, inegi_agentes_fiscales, by="cve_ent") %>% retrieve_result()
 
 # Generación de Reporte
 create_reports(capacidades_edo, 
