@@ -7,20 +7,20 @@ output: html_document
 options(scipen=10000)
 source("../utils.R")
 ```
+## TODO
+* Hacer tidy la de cngmd_transparencia
+* Error que no supimos resolver en la ingesta de participacion_ciudadana (está pero no está).
+* En proceso el índice del IMCO (sólo falta una de los 9 scripts de ingesta)
+* Variables de Intercensal (Moniduarte las hizo) para join de amenazas. 
 
 ###########################################################################
 AMENAZAS
 ###########################################################################
-## TODO
-* Checar ingesta de cngmd_participacion_ciudadana. Según Luigi todo está pero no.
-* Delitos la hizo Moni
-* Hacer tidy la de cngmd_transparencia.
 
 ```{r, results = "hide"}
 # Cenapred 
 cenapred <- large_table(con,clean,cenapred_app_municipios) %>%
-  select(cve_muni,gp_inundac,gp_sequia2,gp_bajaste,gp_ciclnes,g_suscelad,gp_sismico,gp_tsunami) %>%  
-  mutate(cve_muni = as.integer(cve_muni)) %>% retrieve_result()
+  select(cve_muni,gp_inundac,gp_sequia2,gp_bajaste,gp_ciclnes,g_suscelad,gp_sismico,gp_tsunami) 
 
 # Intercensal 2015
 intercensal <- large_table(con,raw, intercensal_persona_2015) %>%
@@ -32,16 +32,20 @@ intercensal <- large_table(con,raw, intercensal_persona_2015) %>%
 # Poblaciones flotantes
 
 # Delitos
+delitos <- large_table(con,features, crimenes_tasas) %>%
+  select(cve_muni,homicidio_culposo,homicidio_doloso,feminicidio,secuestro,robo_vehiculos,violencia_familiar,incidencia_total) %>%
+  group_by(cve_muni) %>%
+    summarise(homicidio_culposo=avg(homicidio_culposo),homicidio_doloso=avg(homicidio_doloso),feminicidio=avg(feminicidio),secuestro=avg(secuestro),robo_vehiculos=avg(robo_vehiculos),violencia_familiar=avg(violencia_familiar),incidencia_total = avg(incidencia_total))
 
-
-# Join
-amenazas <- cenapred
+#Join
+amenazas <- left_join(cenapred,delitos, by="cve_muni") %>% retrieve_result()
 #amenazas <- left_join(intercensal,cenapred,delitos, by="cve_muni")
 
 # Generación de Reporte
 create_reports(amenazas, 
                task_name = "amenazas", 
                output_dir = "../eda/reportes/amenazas")
+
 ```
 
 
@@ -56,15 +60,14 @@ CAPACIDADES
 
 # CFE 
 cfe <- dbGetQuery(con,'
-  SELECT  LPAD(cveedo::text, 2, \'0\') || LPAD(cvemun::text, 3, \'0\') as cve_muni, sum(num) as n_usuarios
+  SELECT LPAD(cveinegi::text, 2, \'0\') || LPAD(cvemun::text, 3, \'0\') as cve_muni, sum(num) as n_usuarios
   FROM raw.cfe
-  WHERE tipo LIKE \'Usuarios\'
+  WHERE tipo like \'Usuarios\'
   GROUP BY cve_muni')
 
 # Internet
 internet <- large_table(con,raw,internet_municipios) %>% 
   select(cve_muni,pct_viv_con_internet)  
- 
 
 #Complejidad Economica, Diversificación Económica, Productividad de la tierra
 complejidad <- large_table(con,raw,complejidad_municipios) %>% select(cve_muni, complejidad_2014)
@@ -120,21 +123,21 @@ cngmd_predial <- large_table(con,raw,cngmd_predial) %>%
 cngmd_recoleccion_basura <- large_table(con,raw,cngmd_recoleccion_basura) %>%
   mutate(cve_muni = as.character(rsu_folio)) %>% select(cve_muni,basura_porcent_cab)
 
-cngmd_transparencia1 <- large_table(con,raw,cngmd_transparencia) %>%
-  mutate(cve_muni = as.character(ubic_geo)) %>%
-  select(cve_muni,inf_publ) %>% retrieve_result() %>% distinct() %>% group_by_at(vars(inf_publ))%>% mutate(i = row_number()) %>% spread(cve_muni,inf_publ)
+# cngmd_transparencia1 <- large_table(con,raw,cngmd_transparencia) %>% retrieve_result()
+#   mutate(cve_muni = as.character(ubic_geo)) %>%
+#   select(cve_muni,inf_publ) %>% retrieve_result() %>% distinct() %>% group_by_at(vars(inf_publ))%>% mutate(i = row_number()) %>% spread(cve_muni,inf_publ)
+# 
+# cngmd_transparencia2 <- large_table(con,raw,cngmd_transparencia) %>%
+#   mutate(cve_muni = as.character(ubic_geo)) %>%
+#   select(cve_muni,mec_tran) %>% retrieve_result() %>% distinct() %>% group_by_at(vars(mec_tran))%>% mutate(i = row_number()) %>% spread(mec_tran,cve_muni)
 
-cngmd_transparencia2 <- large_table(con,raw,cngmd_transparencia) %>%
-  mutate(cve_muni = as.character(ubic_geo)) %>%
-  select(cve_muni,mec_tran) %>% retrieve_result() %>% distinct() %>% group_by_at(vars(mec_tran))%>% mutate(i = row_number()) %>% spread(mec_tran,cve_muni)
-
-cngmd_transparencia <- left_join(cngmd_transparencia1,cngmd_transparencia2,by = 'cve_uni')
-
+# cngmd_transparencia <- left_join(cngmd_transparencia1,cngmd_transparencia2,by = 'cve_uni')
+# 
 cngmd_participacion_ciudadana <- large_table(con,raw,cngmd_participacion_ciudadana)
 
 # Join
 capacidades <- left_join(complejidad,internet, by="cve_muni") %>%
-  left_join(cngmd_proteccion_civil, by="cve_muni")%>%
+  left_join(cngmd_proteccion_civil, by="cve_muni") %>%
   left_join(cngmd_drenaje, by="cve_muni") %>% 
   left_join(cngmd_predial, by="cve_muni") %>% 
   left_join(cngmd_recoleccion_basura, by="cve_muni") %>% retrieve_result()
@@ -145,8 +148,14 @@ capacidades <- capacidades %>%
   left_join(aux, by="cve_muni") %>%
   left_join(hospitales, by="cve_muni") 
 
+capacidades_numericas <- na.omit(scale(select_if(capacidades, is.numeric)))
+
 # Generación de Reporte
-create_reports(capacidades %>% select(-totalpo1), 
+create_reports(capacidades_numericas %>% data.table(), 
+               task_name = "capacidades", 
+               output_dir = "../eda/reportes/capacidades")
+
+create_reports_2(capacidades %>% select(-totalpo1) %>% data.table(), 
                task_name = "capacidades", 
                output_dir = "../eda/reportes/capacidades")
 ```
