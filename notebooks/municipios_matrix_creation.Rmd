@@ -145,8 +145,10 @@ capacidades <- capacidades %>%
   left_join(aux, by="cve_muni") %>%
   left_join(hospitales, by="cve_muni") 
 
+capacidades_numericas <- na.omit(scale(select.i(capacidades, is.numeric)))
+
 # Generación de Reporte
-create_reports(capacidades %>% select(-totalpo1), 
+create_reports(capacidades_numericas %>% data.table(),  
                task_name = "capacidades", 
                output_dir = "../eda/reportes/capacidades")
 ```
@@ -156,6 +158,7 @@ VULNERABILIDADES
 ###########################################################################
 
 ```{r}
+#CONEVAL
 #dbrsocial::clear_results(connection = con)
 coneval <- large_table(con,clean,coneval_municipios) %>%   
 filter(data_date == "2015-a") %>% 
@@ -164,8 +167,289 @@ mutate(cve_muni = as.integer(cve_muni)) %>% retrieve_result()
 ```
 
 ```{r}
-intercensal <- large_table(con,public,intercensal_mun_2015) %>% mutate(cve_muni= as.integer(paste0(ent,mun))) %>% retrieve_result()
-```
+#GRUPOS ETARIOS
+#MAYORES DE 65
+
+intercensal <- dbGetQuery(con,'
+  SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni, 
+  sum (factor) as poblacion_mun,
+  sum(CASE 
+        WHEN CAST(edad as integer) > 64
+            THEN factor 
+            ELSE 0 
+        END) as mayores65
+  FROM raw.intercensal_personas_2015
+  GROUP BY cve_muni')
+
+intercensal_poblacion_mayor <- intercensal %>% 
+  mutate(poblacion_mayor = as.double(mayores65)/poblacion_mun) %>% 
+  mutate(porcentaje_poblacion_mayor = poblacion_mayor*100) 
+
+#MENORES DE 5 AÑOS
+intercensal <- dbGetQuery(con,'
+  SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni, 
+  sum (factor) as poblacion_mun,
+  sum(CASE 
+        WHEN CAST(edad as integer) < 6
+            THEN factor 
+            ELSE 0 
+        END) as menores5
+  FROM raw.intercensal_personas_2015
+  GROUP BY cve_muni')
+
+intercensal_poblacion_infantil <- intercensal %>% 
+  mutate(poblacion_infantil = as.double(menores5)/poblacion_mun) %>% 
+  mutate(porcentaje_poblacion_infantil = poblacion_infantil*100) 
+
+#ADULTOS 19-29
+intercensal <- dbGetQuery(con,'
+  SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni, 
+  sum (factor) as poblacion_mun,
+  sum(CASE 
+        WHEN CAST(edad as integer) < 30 AND edad >18
+            THEN factor 
+            ELSE 0 
+        END) as adultos
+  FROM raw.intercensal_personas_2015
+  GROUP BY cve_muni')
+
+intercensal_poblacion_adulta <- intercensal %>% 
+  mutate(poblacion_adulta = as.double(adultos)/poblacion_mun) %>% 
+  mutate(porcentaje_poblacion_adulta = poblacion_adulta*100)
+
+#RELACION DE DEPENDENCIA
+intercensal <- dbGetQuery(con,'
+  SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni, 
+  sum (factor) as poblacion_mun,
+  sum(CASE 
+        WHEN CAST(edad as integer) < 15
+            THEN factor 
+            ELSE 0 
+        END) as menores,
+  sum(CASE 
+        WHEN CAST(edad as integer) > 64
+            THEN factor 
+            ELSE 0 
+        END) as mayores
+  FROM raw.intercensal_personas_2015
+  GROUP BY cve_muni')
+
+intercensal_poblacion_dependiente <- intercensal %>% 
+  mutate(poblacion_dependiente = menores+mayores) %>%
+  mutate(proporcion_dependiente = as.double(poblacion_dependiente)/poblacion_mun) %>% 
+  mutate(porcentaje_poblacion_dependiente = proporcion_dependiente*100)
+
+
+#AUTOADSCRIPCIÓN
+intercensal <- dbGetQuery(con,'
+  SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni, 
+  sum (factor) as poblacion_mun,
+  sum(CASE 
+        WHEN CAST(perte_indigena as integer) = 1 OR CAST(perte_indigena as integer) = 2
+            THEN factor 
+            ELSE 0 
+        END) as indigenas
+  FROM raw.intercensal_personas_2015
+  GROUP BY cve_muni')
+
+intercensal_poblacion_indigena <- intercensal %>% 
+  mutate(proporcion_indigena = as.double(indigenas)/poblacion_mun) %>% 
+  mutate(porcentaje_poblacion_indigena = proporcion_indigena*100)
+
+#LENGUA INDÍGENA
+intercensal <- dbGetQuery(con,'  
+  SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni, 
+  sum (factor) as poblacion_mun,
+  sum(CASE 
+        WHEN CAST(hlengua as integer) = 1 
+            THEN factor 
+            ELSE 0 
+        END) as lengua_indigena
+  FROM raw.intercensal_personas_2015
+  GROUP BY cve_muni')
+
+intercensal_poblacion_lengua_indigena <- intercensal %>% 
+  mutate(proporcion_lengua_indigena = as.double(lengua_indigena)/poblacion_mun) %>% 
+  mutate(porcentaje_poblacion_lengua_indigena = proporcion_lengua_indigena*100)
+
+#AFRODESCENDIENTE
+intercensal <- dbGetQuery(con,'  
+  SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni, 
+  sum (factor) as poblacion_mun,
+  sum(CASE 
+        WHEN CAST(afrodes as integer) = 1 OR CAST(afrodes as integer) = 2 
+            THEN factor 
+            ELSE 0 
+        END) as afrodescendientes
+  FROM raw.intercensal_personas_2015
+  GROUP BY cve_muni')
+
+intercensal_poblacion_afrodescendiente <- intercensal %>% 
+  mutate(proporcion_afrodescendientes = as.double(afrodescendientes)/poblacion_mun) %>% 
+  mutate(porcentaje_poblacion_afrodescendiente = proporcion_afrodescendientes*100)
+
+#HOGARES UNIPERSONALES
+intercensal_viviendas <- dbGetQuery(con,'  
+  SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni,
+  sum (factor) as viviendas_mun,
+  sum(CASE 
+        WHEN CAST(tipohog as integer) = 5
+            THEN factor 
+            ELSE 0 
+        END) as unipersonales
+  FROM raw.intercensal_viviendas_2015
+  GROUP BY cve_muni')
+
+intercensal_unipersonales <- intercensal_viviendas %>% 
+  mutate(proporcion_unipersonales = as.double(unipersonales)/viviendas_mun) %>% 
+  mutate(porcentaje_hogares_unipersonales = proporcion_unipersonales*100)
+
+#JEFATURA FEMENINA
+intercensal_viviendas <- dbGetQuery(con,'  
+  SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni,
+  sum (factor) as viviendas_mun,
+  sum(CASE 
+        WHEN CAST(jefe_sexo as integer) = 3
+            THEN factor 
+            ELSE 0 
+        END) as jefatura_fem
+  FROM raw.intercensal_viviendas_2015
+  GROUP BY cve_muni')
+
+intercensal_jefatura_femenina <- intercensal_viviendas %>% 
+  mutate(proporcion_jefatura = as.double(jefatura_fem)/viviendas_mun) %>% 
+  mutate(porcentaje_hogares_jefafem = proporcion_jefatura*100)
+
+#MUJERES
+intercensal <- dbGetQuery(con,'  
+  SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni, 
+  sum (factor) as poblacion_mun,
+  sum(CASE 
+        WHEN CAST(sexo as integer) = 3 
+            THEN factor 
+            ELSE 0 
+        END) as mujeres
+  FROM raw.intercensal_personas_2015
+  GROUP BY cve_muni')
+
+intercensal_poblacion_femenina <- intercensal %>% 
+  mutate(proporcion_mujeres = as.double(mujeres)/poblacion_mun) %>% 
+  mutate(porcentaje_poblacion_femenina = proporcion_mujeres*100)
+
+#HOMBRES
+intercensal <- dbGetQuery(con,'  
+  SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni, 
+  sum (factor) as poblacion_mun,
+  sum(CASE 
+        WHEN CAST(sexo as integer) = 1 
+            THEN factor 
+            ELSE 0 
+        END) as hombres
+  FROM raw.intercensal_personas_2015
+  GROUP BY cve_muni')
+
+intercensal_poblacion_masculina <- intercensal %>% 
+  mutate(proporcion_hombres = as.double(hombres)/poblacion_mun) %>% 
+  mutate(porcentaje_poblacion_masculina = proporcion_hombres*100)
+
+#MUJERES EN EL MERCADO LABORAL
+intercensal <- dbGetQuery(con,'
+  SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni,
+  sexo,
+  edad,
+  conact, 
+  factor
+  FROM raw.intercensal_personas_2015
+ ')
+
+intercensal_ocupadas <- intercensal %>% 
+  filter(sexo == 3) %>% 
+  mutate(mujeres = ifelse(sexo == 3, 1, 0),
+         edad_trabajar = ifelse(edad > 14, 1, 0),
+         ocupadas = ifelse(conact == 10 & 11 & 12 & 13 & 14 & 15 & 16, 1, 0)) %>% 
+  mutate(mujeres_f = mujeres*factor,
+         edad_trabajar_f = edad_trabajar*factor,
+         ocupadas_f = ocupadas*factor) 
+  
+intercensal_ocupadas[is.na(intercensal_ocupadas)] <- 0
+
+intercensal_ocupadas <- intercensal_ocupadas %>% 
+  group_by(cve_muni)  %>% 
+  summarise_all(sum)
+
+intercensal_ocupadas <- mutate(intercensal_ocupadas, 
+                               proporcion_mujeres_ocupadas = ocupadas_f/edad_trabajar_f,
+                               porcentaje_mujeres_ocupadas = proporcion_mujeres_ocupadas*100)
+
+intercensal_ocupadas <- subset(intercensal_ocupadas, 
+                                      select = c(cve_muni, mujeres_f, edad_trabajar_f, ocupadas_f, porcentaje_mujeres_ocupadas))
+
+#HOMBRES EN EL MERCADO LABORAL
+intercensal <- dbGetQuery(con,'
+  SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni,
+  sexo,
+  edad,
+  conact, 
+  factor
+  FROM raw.intercensal_personas_2015
+ ')
+
+intercensal_ocupados <- intercensal %>% 
+  filter(sexo == 1) %>% 
+  mutate(hombres = ifelse(sexo == 1, 1, 0),
+         edad_trabajar = ifelse(edad > 14, 1, 0),
+         ocupados = ifelse(conact == 10 & 11 & 12 & 13 & 14 & 15 & 16, 1, 0)) %>% 
+  mutate(hombres_f = hombres*factor,
+         edad_trabajar_f = edad_trabajar*factor,
+         ocupados_f = ocupados*factor) 
+  
+intercensal_ocupados[is.na(intercensal_ocupados)] <- 0
+
+intercensal_ocupados <- intercensal_ocupados %>% 
+  group_by(cve_muni)  %>% 
+  summarise_all(sum)
+
+intercensal_ocupados <- mutate(intercensal_ocupados, 
+                               proporcion_hombres_ocupados = ocupados_f/edad_trabajar_f,
+                               porcentaje_hombres_ocupados = proporcion_hombres_ocupados*100)
+
+intercensal_ocupados <- subset(intercensal_ocupados, 
+                                      select = c(cve_muni, hombres_f, edad_trabajar_f, ocupados_f, porcentaje_hombres_ocupados))
+
+
+#MIGRACION INTERNA RECIENTE
+intercensal <- dbGetQuery(con,'  
+  SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni, 
+  sum (factor) as poblacion_mun,
+  sum(CASE 
+        WHEN nom_mun != nom_mun_res10 
+            THEN factor 
+            ELSE 0 
+        END) as migrantes_internos_recientes
+  FROM raw.intercensal_personas_2015
+  GROUP BY cve_muni')
+
+intercensal_migracion_interna_reciente <- intercensal %>% 
+  mutate(proporcion_migracion_interna_reciente = as.double(migrantes_internos_recientes)/poblacion_mun) %>% 
+  mutate(porcentaje_migrantes_internos_recientes = proporcion_migracion_interna_reciente*100)
+
+#MIGRACION EXTERNA RECIENTE
+intercensal <- dbGetQuery(con,'
+  SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni, 
+  sum (factor) as poblacion_mun,
+  sum(CASE 
+        WHEN CAST(ent_pais_res10 as integer) > 33
+            THEN factor 
+            ELSE 0 
+        END) as migrantes
+  FROM raw.intercensal_personas_2015
+  GROUP BY cve_muni')
+
+intercensal_migracion_externa_reciente <- intercensal %>% 
+  mutate(proporcion_externa = as.double(migrantes)/poblacion_mun) %>% 
+  mutate(porcentaje_migrantes_externos_recientes = proporcion_externa*100)
+
+ ```
 
 ```{r}
 #Tiempo destinado a trabajo no remunerado, Brecha promedio de horas de trabajo de cuidados
