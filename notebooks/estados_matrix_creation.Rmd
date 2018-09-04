@@ -65,15 +65,28 @@ agentes_fiscales <- large_table(con, raw, inegi_agentes_fiscales) %>%
 agentes_fiscales$nom_ent <- str_replace_all(agentes_fiscales$nom_ent, c("Ciudad de México" = "Distrito Federal","Ciudad de México" = "Distrito Federal"))
 inegi_agentes_fiscales <- left_join(cves, agentes_fiscales, by = "nom_ent") %>% select(-nom_ent)
 
-# índice de sistema político estable y funcional
-periodistas <- large_table(con,raw,imco_periodistas)  %>% retrieve_result()
-equidad_congreso <- large_table(con,raw,imco_equidad_congreso) %>% retrieve_result()
-#corrupcion_estatal <- large_table(con,raw,imco_corrupcion_estatal)
-#corrupcion_partidos <- large_table(con,raw,imco_corrupcion_partidos)
+# Índice de sistema político estable y funcional
+periodistas <- large_table(con,raw,imco_periodistas) %>% 
+  mutate(nom_ent=entidad_federativa)
+equidad_congreso <- large_table(con,raw,imco_equidad_congreso) %>% 
+  mutate(nom_ent=entidad_federativa)
+corrupcion_estatal <- large_table(con,raw,imco_corrupcion_estatal) %>% 
+  mutate(nom_ent=entidad_federativa)
+corrupcion_partidos <- large_table(con,raw,imco_corrupcion_partidos) %>% 
+  mutate(nom_ent=entidadfederativa)
+matrimonio_igualitario <- large_table(con,raw,imco_matrimonio_igualitario) %>% 
+  mutate(nom_ent=estado)
+info <- large_table(con,raw,imco_info_publica) %>% 
+  mutate(cve_ent=as.character(entidad))
+info_publica <- left_join(cves,info,by='cve_ent')
+#participacion_ciudadana <- large_table(con,raw,imco_participacion_ciudadana) %>% retrieve_result()
 #corrupcion_sector <- large_table(con,raw,imco_corrupcion_sector)
-#info_publica <- large_table(con,raw,imco_info_publica)
-#equidad_congreso <- large_table(con,raw,imco_participacion_ciudadana)
-#equidad_congreso <- large_table(con,raw,imco_marimonio_igualitario)
+
+indice_sist_politico <- left_join(corrupcion_estatal,equidad_congreso, by='nom_ent') %>% 
+  left_join(periodistas,by='nom_ent') %>%
+  left_join(corrupcion_partidos,by='nom_ent') %>%
+  left_join(matrimonio_igualitario,by='nom_ent') %>%
+  left_join(info_publica,,by='nom_ent')%>% retrieve_result()
 
 # Join
 capacidades_edo <- left_join(inegi_jueces, inegi_agentes_fiscales, by="cve_ent") %>% retrieve_result()
