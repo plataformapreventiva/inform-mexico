@@ -79,7 +79,7 @@ matrimonio_igualitario <- large_table(con,raw,imco_matrimonio_igualitario) %>%
 info <- large_table(con,raw,imco_info_publica) %>% 
   mutate(cve_ent=as.character(entidad))
 info_publica <- left_join(cves,info,by='cve_ent')
-#participacion_ciudadana <- large_table(con,raw,imco_participacion_ciudadana) %>% retrieve_result()
+participacion_ciudadana <- large_table(con,raw,imco_participacion_ciudadana) %>% retrieve_result()
 #corrupcion_sector <- large_table(con,raw,imco_corrupcion_sector)
 
 indice_sist_politico <- left_join(corrupcion_estatal,equidad_congreso, by='nom_ent') %>% 
