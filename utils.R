@@ -79,3 +79,19 @@ create_reports <- function(df, task_name, output_dir){
   create_report(data = df , output_file = output_file, output_dir = output_dir)
 }
 
+create_reports_2 <- function(df, task_name, output_dir){
+  df <- data.table(df)
+  output_file <- glue('{task_name}.html')
+  output_dir <- glue('{output_dir}')
+  create_report(data = df , output_file = output_file, output_dir = output_dir, y = "cve_muni", config = list(
+    "introduce" = list(),
+    "plot_missing" = list(),
+    "plot_histogram" = list(),
+    "plot_density" = list(),
+    #"plot_bar" = list("with" = "cve_muni"),
+    #"plot_correlation" = list("use" = "pairwise.complete.obs"),
+    #"plot_prcomp" = list(),
+    "plot_boxplot" = list("by" = "cve_muni"),
+    "plot_scatterplot" = list("by" = "cve_muni")
+  ))
+}
