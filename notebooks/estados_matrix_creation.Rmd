@@ -9,6 +9,7 @@ source("../utils.R")
 ```
 ## TODO 
 * La ingesta de inpc está mal, sólo toma 32 de las 46 ciudades. 
+* Moni iba a agregar la enigh
 
 ###########################################################################
 AMENAZAS
@@ -90,14 +91,16 @@ info_publica <- left_join(cves,info,by='cve_ent')
 participacion_ciudadana <- large_table(con,raw,imco_participacion_ciudadana) %>%
   rename(nom_ent=entidad) %>% 
   select(-c(data_date,actualizacion_sedesol)) 
-#corrupcion_sector <- large_table(con,raw,imco_corrupcion_sector)
+corrupcion_sector <- large_table(con,raw,imco_corrupcion_sector)
 
 indice_sist_politico <- left_join(corrupcion_estatal,equidad_congreso, by='nom_ent') %>% 
   left_join(periodistas,by='nom_ent') %>%
   left_join(matrimonio_igualitario,by='nom_ent') %>%
   left_join(info_publica,by='nom_ent') %>%
+  left_join(corrupcion_sector,by='nom_ent') %>%
   left_join(participacion_ciudadana,by='nom_ent') %>% retrieve_result() %>%
   left_join(corrupcion_partidos,by='nom_ent')
+
 # Join
 capacidades_edo <- left_join(inegi_jueces, inegi_agentes_fiscales, by="cve_ent") %>% 
   left_join(indice_sist_politico, by="cve_ent")
@@ -111,5 +114,50 @@ create_reports(capacidades_edo,
 ###########################################################################
 VULNERABILIDADES
 ###########################################################################
+```{r, results = "hide"}
+#ENIGH
+concentrados <-large_table(con, clean, enigh_concentrados) %>% 
+  select(folioviv, foliohog, ubica_geo, factor_hog) %>% retrieve_result()
 
-No hay a nivel estado
+poblacion <-large_table(con, clean, enigh_poblacion) %>% 
+  select(folioviv, foliohog, numren, sexo, edad, disc1, disc2, disc3, disc4, disc5, disc6, disc7, hor_4, min_4, usotiempo4) %>% retrieve_result()
+
+trabajos <-large_table(con, clean, enigh_trabajos) %>% 
+  select(folioviv, foliohog, numren, pres_12) %>% retrieve_result()
+
+ingresos <- large_table(con, clean, enigh_ingresos) %>% 
+  select(folioviv, foliohog, numren, clave, ing_tri) %>% retrieve_result()
+
+enigh1 <- full_join(poblacion, trabajos)
+enigh1_1 <- full_join(enigh1, ingresos)
+enigh2 <- full_join(enigh1_1,concentrados)
+
+enigh2$factor_hog <- as.integer(enigh2$factor_hog)
+
+enigh <- mutate(enigh2, cve_muni = substr(enigh2$ubica_geo, 1, 5))
+
+##Ojo que aquí me falta sacar la población total de cada municipio con el factor
+
+##Discapacidad intelectual
+
+enigh_disc_int <- enigh[ which( enigh$disc1 == 6 | enigh$disc2 == 6 | enigh$disc3 == 6 | enigh$disc4 == 6 | enigh$disc5 == 6 | enigh$disc6 == 6 | enigh$disc7 == 6) , ]  
+
+##Usar el factor de expansión para contar cuantas personas tienen la discapacidad de tipo 6 y hacer exactamente lo mismo para las personas que tienen las demás discapacidades.
+
+##Prestación de guarderías
+
+enigh_guarderías <- enigh %>% 
+  filter(pres_12 == 12)
+
+##Tiempo a trabajo no remunerado 
+
+enigh_trabajonr <- enigh %>% 
+  mutate(tiempo1 = hor_4*60) %>% 
+  mutate(tiempo2 = tiempo1 + min_4) %>% 
+  mutate(tiempo_tnr = tiempo2/60)
+
+##Brecha salarial
+
+enigh_brecha <- enigh %>% 
+  filter(clave == p001 & p011)
+```
