@@ -577,6 +577,45 @@ intercensal_ocupados <- mutate(intercensal_ocupados,
 intercensal_ocupados <- subset(intercensal_ocupados, 
                                       select = c(cve_muni, proporcion_hombres_ocupados))
 
+##Brecha tiempo de cuidados
+intercensal <- dbGetQuery(con,'
+  SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni,
+  sexo,
+  acti_sin_pago1,
+  acti_sin_pago2,
+  acti_sin_pago3,
+  acti_sin_pago4,
+  acti_sin_pago5,
+  acti_sin_pago6,
+  acti_sin_pago7,
+  acti_sin_pago8,
+  factor
+  FROM raw.intercensal_personas_2015
+ ')
+
+intercensal$total_horas = rowSums (intercensal[ , 3:10])
+
+intercensal <- intercensal %>% 
+  select(cve_muni, sexo, factor, total_horas) %>%  
+  group_by(sexo, cve_muni) %>% 
+  summarise(media_horas_cuidados = mean(total_horas, na.rm = T))
+
+base_cuidados_mujeres <- intercensal %>% 
+  filter(sexo == 3) %>% 
+  subset(select = c(cve_muni, media_horas_cuidados))
+
+names(base_cuidados_mujeres)[names(base_cuidados_mujeres) == 'media_horas_cuidados'] <- 'media_horas_cuidados_mujeres'
+
+base_cuidados_hombres <- intercensal %>% 
+  filter(sexo == 1) %>% 
+  subset(select = c(cve_muni, media_horas_cuidados))
+
+names(base_cuidados_hombres)[names(base_cuidados_hombres) == 'media_horas_cuidados'] <- 'media_horas_cuidados_hombres'
+
+brecha_horas_cuidados <- left_join(base_cuidados_hombres, base_cuidados_mujeres, by = c("cve_muni")) %>% 
+  mutate(brecha_horas_cuidados = media_horas_cuidados_mujeres-media_horas_cuidados_hombres) %>% 
+  subset(select = c(cve_muni, brecha_horas_cuidados))
+
 
 ##JOIN VULNERABILIDADES
 
@@ -592,64 +631,13 @@ vulnerabilidades9 <- left_join(vulnerabilidades8, intercensal_jefatura_femenina,
 vulnerabilidades10 <- left_join(vulnerabilidades9, intercensal_poblacion_masculina, by = "cve_muni")
 vulnerabilidades11 <- left_join(vulnerabilidades10, intercensal_ocupados, by = "cve_muni")
 vulnerabilidades12 <- left_join(vulnerabilidades11, intercensal_ocupadas, by = "cve_muni")
+vulnerabilidades13 <- left_join(vulnerabilidades12, brecha_horas_cuidados, by = "cve_muni")
 ##FALTA HACER EL JOIN DE LAS VARIABLES DE ENIGH
 
-vulnerabilidades_numericas <- na.omit(scale(select_if(vulnerabilidades12, is.numeric)))
+vulnerabilidades_numericas <- na.omit(scale(select_if(vulnerabilidades13, is.numeric)))
 
 create_reports(vulnerabilidades_numericas,
                task_name = "vulnerabilidades", 
                output_dir = "../eda/reportes/vulnerabilidades")
 
  ```
-```{r}
-concentrados <-large_table(con, clean, enigh_concentrados) %>% 
-  select(folioviv, foliohog, ubica_geo, factor_hog) %>% retrieve_result()
-
-poblacion <-large_table(con, clean, enigh_poblacion) %>% 
-  select(folioviv, foliohog, numren, sexo, edad, disc1, disc2, disc3, disc4, disc5, disc6, disc7, hor_4, min_4, usotiempo4) %>% retrieve_result()
-
-trabajos <-large_table(con, clean, enigh_trabajos) %>% 
-  select(folioviv, foliohog, numren, pres_12) %>% retrieve_result()
-
-ingresos <- large_table(con, clean, enigh_ingresos) %>% 
-  select(folioviv, foliohog, numren, clave, ing_tri) %>% retrieve_result()
-
-enigh1 <- full_join(poblacion, trabajos)
-enigh1_1 <- full_join(enigh1, ingresos)
-enigh2 <- full_join(enigh1_1,concentrados)
-
-enigh2$factor_hog <- as.integer(enigh2$factor_hog)
-
-enigh <- mutate(enigh2, cve_muni = substr(enigh2$ubica_geo, 1, 5))
-
-##Ojo que aquí me falta sacar la población total de cada municipio con el factor
-
-##Discapacidad intelectual
-
-enigh_disc_int <- enigh[ which( enigh$disc1 == 6 | enigh$disc2 == 6 | enigh$disc3 == 6 | enigh$disc4 == 6 | enigh$disc5 == 6 | enigh$disc6 == 6 | enigh$disc7 == 6) , ]  
-
-##Usar el factor de expansión para contar cuantas personas tienen la discapacidad de tipo 6 y hacer exactamente lo mismo para las personas que tienen las demás discapacidades.
-
-##Prestación de guarderías
-
-enigh_guarderías <- enigh %>% 
-  filter(pres_12 == 12)
-
-##Tiempo a trabajo no remunerado 
-
-enigh_trabajonr <- enigh %>% 
-  mutate(tiempo1 = hor_4*60) %>% 
-  mutate(tiempo2 = tiempo1 + min_4) %>% 
-  mutate(tiempo_tnr = tiempo2/60)
-
-##Brecha salarial
-
-enigh_brecha <- enigh %>% 
-  filter(clave == p001 & p011)
-
-
-
-```
-```{r}
-v_uno <- left_join(intercensal,coneval)
-```
