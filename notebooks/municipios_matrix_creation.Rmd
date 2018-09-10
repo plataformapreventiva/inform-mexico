@@ -309,69 +309,69 @@ VULNERABILIDADES
 ```{r}
 #CONEVAL
 coneval <- large_table(con,clean,coneval_municipios) %>%   
-        filter(data_date == "2015-a") %>% 
-        select(cve_muni, ic_rezedu_porcentaje, ic_asalud_porcentaje, ic_segsoc_porcentaje, ic_cv_porcentaje,
-               vul_ing_porcentaje, ic_sbv_porcentaje, pobreza_porcentaje) %>% retrieve_result()
+  filter(data_date == "2015-a") %>% 
+  select(cve_muni, ic_rezedu_porcentaje, ic_asalud_porcentaje, ic_segsoc_porcentaje, ic_cv_porcentaje,
+         vul_ing_porcentaje, ic_sbv_porcentaje, pobreza_porcentaje) %>% retrieve_result()
 
 #GRUPOS ETARIOS
 #MAYORES DE 65, MENORES DE 5 AÑOS, ADULTOS 19-29, RELACION DE DEPENDENCIA, AUTOADSCRIPCIÓN,
 #LENGUA INDÍGENA, AFRODESCENDIENTE, MUJERES, HOMBRES
 
 intercensal <- dbGetQuery(con,'
-  SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni, 
-  sum (factor) as poblacion_mun,
-  sum(CASE 
-        WHEN CAST(edad as integer) > 64
-            THEN factor 
-            ELSE 0 
-        END) as mayores65,
-  sum(CASE 
-        WHEN CAST(edad as integer) < 6
-            THEN factor 
-            ELSE 0 
-        END) as menores5,
-  sum(CASE 
-        WHEN CAST(edad as integer) < 30 AND edad >18
-            THEN factor 
-            ELSE 0 
-        END) as adultos,
-  sum(CASE 
-        WHEN CAST(edad as integer) < 15
-            THEN factor 
-            ELSE 0 
-        END) as menores,
-  sum(CASE 
-        WHEN CAST(edad as integer) > 64
-            THEN factor 
-            ELSE 0 
-        END) as mayores,
-  sum(CASE 
-        WHEN CAST(perte_indigena as integer) = 1 OR CAST(perte_indigena as integer) = 2
-            THEN factor 
-            ELSE 0 
-        END) as indigenas,
-  sum(CASE 
-        WHEN CAST(hlengua as integer) = 1 
-            THEN factor 
-            ELSE 0 
-        END) as lengua_indigena,
-  sum(CASE 
-        WHEN CAST(afrodes as integer) = 1 OR CAST(afrodes as integer) = 2 
-            THEN factor 
-            ELSE 0 
-        END) as afrodescendientes,
-  sum(CASE 
-        WHEN CAST(sexo as integer) = 3 
-            THEN factor 
-            ELSE 0 
-        END) as mujeres,
-  sum(CASE 
-        WHEN CAST(sexo as integer) = 1 
-            THEN factor 
-            ELSE 0 
-        END) as hombres
-  FROM raw.intercensal_personas_2015
-  GROUP BY cve_muni')
+                          SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni, 
+                          sum (factor) as poblacion_mun,
+                          sum(CASE 
+                          WHEN CAST(edad as integer) > 64
+                          THEN factor 
+                          ELSE 0 
+                          END) as mayores65,
+                          sum(CASE 
+                          WHEN CAST(edad as integer) < 6
+                          THEN factor 
+                          ELSE 0 
+                          END) as menores5,
+                          sum(CASE 
+                          WHEN CAST(edad as integer) < 30 AND edad >18
+                          THEN factor 
+                          ELSE 0 
+                          END) as adultos,
+                          sum(CASE 
+                          WHEN CAST(edad as integer) < 15
+                          THEN factor 
+                          ELSE 0 
+                          END) as menores,
+                          sum(CASE 
+                          WHEN CAST(edad as integer) > 64
+                          THEN factor 
+                          ELSE 0 
+                          END) as mayores,
+                          sum(CASE 
+                          WHEN CAST(perte_indigena as integer) = 1 OR CAST(perte_indigena as integer) = 2
+                          THEN factor 
+                          ELSE 0 
+                          END) as indigenas,
+                          sum(CASE 
+                          WHEN CAST(hlengua as integer) = 1 
+                          THEN factor 
+                          ELSE 0 
+                          END) as lengua_indigena,
+                          sum(CASE 
+                          WHEN CAST(afrodes as integer) = 1 OR CAST(afrodes as integer) = 2 
+                          THEN factor 
+                          ELSE 0 
+                          END) as afrodescendientes,
+                          sum(CASE 
+                          WHEN CAST(sexo as integer) = 3 
+                          THEN factor 
+                          ELSE 0 
+                          END) as mujeres,
+                          sum(CASE 
+                          WHEN CAST(sexo as integer) = 1 
+                          THEN factor 
+                          ELSE 0 
+                          END) as hombres
+                          FROM raw.intercensal_personas_2015
+                          GROUP BY cve_muni')
 
 poblacion <- intercensal %>% 
   mutate(poblacion_mayor = as.double(mayores65)/poblacion_mun) %>% 
@@ -390,13 +390,13 @@ poblacion <- intercensal %>%
 
 #MUJERES EN EL MERCADO LABORAL
 intercensal <- dbGetQuery(con,'
-  SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni,
-  sexo,
-  edad,
-  conact, 
-  factor
-  FROM raw.intercensal_personas_2015
- ')
+                          SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni,
+                          sexo,
+                          edad,
+                          conact, 
+                          factor
+                          FROM raw.intercensal_personas_2015
+                          ')
 
 intercensal_ocupadas <- intercensal %>% 
   filter(sexo == 3) %>% 
@@ -406,7 +406,7 @@ intercensal_ocupadas <- intercensal %>%
   mutate(mujeres_f = mujeres*factor,
          edad_trabajar_f = edad_trabajar*factor,
          ocupadas_f = ocupadas*factor) 
-  
+
 intercensal_ocupadas[is.na(intercensal_ocupadas)] <- 0
 
 intercensal_ocupadas <- intercensal_ocupadas %>% 
@@ -418,7 +418,7 @@ intercensal_ocupadas <- mutate(intercensal_ocupadas,
                                porcentaje_mujeres_ocupadas = proporcion_mujeres_ocupadas*100)
 
 intercensal_ocupadas <- subset(intercensal_ocupadas, 
-                                      select = c(cve_muni, proporcion_mujeres_ocupadas))
+                               select = c(cve_muni, proporcion_mujeres_ocupadas))
 
 #HOMBRES EN EL MERCADO LABORAL
 
@@ -430,7 +430,7 @@ intercensal_ocupados <- intercensal %>%
   mutate(hombres_f = hombres*factor,
          edad_trabajar_f = edad_trabajar*factor,
          ocupados_f = ocupados*factor) 
-  
+
 intercensal_ocupados[is.na(intercensal_ocupados)] <- 0
 
 intercensal_ocupados <- intercensal_ocupados %>% 
@@ -442,27 +442,27 @@ intercensal_ocupados <- mutate(intercensal_ocupados,
                                porcentaje_hombres_ocupados = proporcion_hombres_ocupados*100)
 
 intercensal_ocupados <- subset(intercensal_ocupados, 
-                                      select = c(cve_muni, proporcion_hombres_ocupados))
+                               select = c(cve_muni, proporcion_hombres_ocupados))
 
 ocupados <- left_join(intercensal_ocupadas,intercensal_ocupados, by = "cve_muni")
 rm(intercensal_ocupadas,intercensal_ocupados,intercensal)
 
 #JEFATURA FEMENINA, HOGARES UNIPERSONALES
 intercensal_viviendas <- dbGetQuery(con,'  
-  SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni,
-  sum (factor) as viviendas_mun,
-  sum(CASE 
-        WHEN CAST(jefe_sexo as integer) = 3
-            THEN factor 
-            ELSE 0 
-        END) as jefatura_fem,
-  sum(CASE 
-        WHEN CAST(tipohog as integer) = 5
-            THEN factor 
-            ELSE 0 
-        END) as unipersonales
-  FROM raw.intercensal_viviendas_2015
-  GROUP BY cve_muni')
+                                    SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni,
+                                    sum (factor) as viviendas_mun,
+                                    sum(CASE 
+                                    WHEN CAST(jefe_sexo as integer) = 3
+                                    THEN factor 
+                                    ELSE 0 
+                                    END) as jefatura_fem,
+                                    sum(CASE 
+                                    WHEN CAST(tipohog as integer) = 5
+                                    THEN factor 
+                                    ELSE 0 
+                                    END) as unipersonales
+                                    FROM raw.intercensal_viviendas_2015
+                                    GROUP BY cve_muni')
 
 intercensal_hogares <- intercensal_viviendas %>% 
   mutate(proporcion_unipersonales = as.double(unipersonales)/viviendas_mun) %>% 
@@ -471,15 +471,54 @@ intercensal_hogares <- intercensal_viviendas %>%
 
 rm(intercensal_viviendas)
 
+##Brecha tiempo de cuidados
+intercensal <- dbGetQuery(con,'
+                          SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni,
+                          sexo,
+                          acti_sin_pago1,
+                          acti_sin_pago2,
+                          acti_sin_pago3,
+                          acti_sin_pago4,
+                          acti_sin_pago5,
+                          acti_sin_pago6,
+                          acti_sin_pago7,
+                          acti_sin_pago8,
+                          factor
+                          FROM raw.intercensal_personas_2015
+                          ')
+
+intercensal$total_horas = rowSums (intercensal[ , 3:10])
+
+intercensal <- intercensal %>% 
+  select(cve_muni, sexo, factor, total_horas) %>%  
+  group_by(sexo, cve_muni) %>% 
+  summarise(media_horas_cuidados = mean(total_horas, na.rm = T))
+
+base_cuidados_mujeres <- intercensal %>% 
+  filter(sexo == 3) %>% 
+  subset(select = c(cve_muni, media_horas_cuidados))
+
+names(base_cuidados_mujeres)[names(base_cuidados_mujeres) == 'media_horas_cuidados'] <- 'media_horas_cuidados_mujeres'
+
+base_cuidados_hombres <- intercensal %>% 
+  filter(sexo == 1) %>% 
+  subset(select = c(cve_muni, media_horas_cuidados))
+
+names(base_cuidados_hombres)[names(base_cuidados_hombres) == 'media_horas_cuidados'] <- 'media_horas_cuidados_hombres'
+
+brecha_horas_cuidados <- left_join(base_cuidados_hombres, base_cuidados_mujeres, by = c("cve_muni")) %>% 
+  mutate(brecha_horas_cuidados = media_horas_cuidados_mujeres-media_horas_cuidados_hombres) %>% 
+  subset(select = c(cve_muni, brecha_horas_cuidados))
+
 ##JOIN VULNERABILIDADES
 
 vulnerabilidades <- left_join(coneval, poblacion, by = "cve_muni") %>%
   left_join(ocupados, by = "cve_muni") %>% 
-  left_join(intercensal_hogares, by = "cve_muni")
+  left_join(intercensal_hogares, by = "cve_muni") %>% 
+  left_join(brecha_horas_cuidados, by = "cve_muni")
 
 vulnerabilidades_numericas <- na.omit(scale(select_if(vulnerabilidades, is.numeric)))
 
 create_reports(vulnerabilidades_numericas,
                task_name = "vulnerabilidades", 
                output_dir = "../eda/reportes/vulnerabilidades")
-```

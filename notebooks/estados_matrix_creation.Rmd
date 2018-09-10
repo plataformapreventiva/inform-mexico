@@ -115,49 +115,164 @@ create_reports(capacidades_edo,
 VULNERABILIDADES
 ###########################################################################
 ```{r, results = "hide"}
-#ENIGH
-concentrados <-large_table(con, clean, enigh_concentrados) %>% 
-  select(folioviv, foliohog, ubica_geo, factor_hog) %>% retrieve_result()
+##Total de habitantes por estado
+poblacion <-large_table(con, clean, enigh_poblacion) %>% filter(data_date=='2016-a')  %>% 
+  select(folioviv, foliohog, numren, sexo, edad, disc1, disc2, disc3, disc4, disc5, disc6, disc7, hor_4, min_4, usotiempo4) %>% 
+  retrieve_result() %>% 
+  group_by(folioviv, foliohog) %>% 
+  summarise(personas_hogar =n())
 
-poblacion <-large_table(con, clean, enigh_poblacion) %>% 
-  select(folioviv, foliohog, numren, sexo, edad, disc1, disc2, disc3, disc4, disc5, disc6, disc7, hor_4, min_4, usotiempo4) %>% retrieve_result()
+concentrados <-large_table(con, clean, enigh_concentrados) %>% filter(data_date=='2016-a') %>%
+  select(folioviv, foliohog, ubica_geo, tot_integ, factor_hog, data_date) %>% retrieve_result() 
 
-trabajos <-large_table(con, clean, enigh_trabajos) %>% 
-  select(folioviv, foliohog, numren, pres_12) %>% retrieve_result()
+poblacion_estado <- full_join(concentrados, poblacion, by=c("folioviv", "foliohog")) %>% 
+  select(folioviv, factor_hog, personas_hogar) %>% 
+  mutate(folioviv = as.character(folioviv),
+         ent = str_pad(string = folioviv, width = 10, side = 'left', pad = '0'),
+         ent = str_sub(ent, 1, 2),
+         personas = as.numeric(factor_hog)*personas_hogar) %>% 
+  select(ent, personas) %>% 
+  group_by(ent) %>% 
+  summarise_all(sum)
 
-ingresos <- large_table(con, clean, enigh_ingresos) %>% 
-  select(folioviv, foliohog, numren, clave, ing_tri) %>% retrieve_result()
+###Población discapacitados
 
-enigh1 <- full_join(poblacion, trabajos)
-enigh1_1 <- full_join(enigh1, ingresos)
-enigh2 <- full_join(enigh1_1,concentrados)
+poblacion_temp_disc <-large_table(con, clean, enigh_poblacion) %>% filter(data_date=='2016-a')%>% 
+  select(folioviv, foliohog, numren, disc1, disc2, disc3, disc4, disc5, disc6, disc7) %>%  retrieve_result()
 
-enigh2$factor_hog <- as.integer(enigh2$factor_hog)
+poblacion_disc <- poblacion_temp_disc %>% 
+  mutate(disc_int = ifelse(disc1 %in% c(6) | disc2 %in% c(6) | disc3 %in% c(6) | disc4 %in% c(6) | disc5 %in% c(6) | 
+                             disc6 %in% c(6) | disc7 %in% c(6), 1, 0),
+         disc_fis = ifelse(disc1 %in% c(1,5) | disc2 %in% c(1,5) | disc3 %in% c(1,5) | 
+                                disc4 %in% c(1,5) | disc5 %in% c(1,5) | disc6 %in% c(1,5) | disc7 %in% c(1,5), 1, 0),
+         disc_sens = ifelse(disc1 %in% c(2:4) | disc2 %in% c(2:4) | disc3 %in% c(2:4) | 
+                                disc4 %in% c(2:4) | disc5 %in% c(2:4) | disc6 %in% c(2:4) | disc7 %in% c(2:4), 1, 0),
+         disc_men = ifelse(disc1 %in% c(7) | disc2 %in% c(7) | disc3 %in% c(7) | disc4 %in% c(7) | disc5 %in% c(7) | 
+                             disc6 %in% c(7) | disc7 %in% c(7), 1, 0)) %>% 
+  select(folioviv, foliohog, disc_int, disc_fis, disc_sens, disc_men) %>% 
+  group_by(folioviv, foliohog) %>% 
+  summarise_all(sum) 
 
-enigh <- mutate(enigh2, cve_muni = substr(enigh2$ubica_geo, 1, 5))
+concentrados <-large_table(con, clean, enigh_concentrados) %>% filter(data_date=='2016-a') %>%
+  select(folioviv, foliohog, ubica_geo, tot_integ, factor_hog, data_date) %>% retrieve_result() %>% 
+  mutate(factor_hog = as.integer(factor_hog))
 
-##Ojo que aquí me falta sacar la población total de cada municipio con el factor
+pob_disc <- full_join(concentrados, poblacion_disc, by=c("folioviv", "foliohog")) %>% 
+  select(folioviv, foliohog, factor_hog, disc_int, disc_fis, disc_sens, disc_men) %>% 
+  mutate(folioviv = as.character(folioviv),
+         ent = str_pad(string = folioviv, width = 10, side = 'left', pad = '0'),
+         ent = str_sub(ent, 1, 2),
+         factor_hog = as.integer(factor_hog),
+         disc_int = disc_int*factor_hog,
+         disc_fis = disc_fis*factor_hog,
+         disc_sens = disc_sens*factor_hog,
+         disc_men = disc_men*factor_hog) %>% 
+  select(ent, disc_int, disc_fis, disc_sens, disc_men) %>% 
+  group_by(ent) %>% 
+  summarise_all(sum)
 
-##Discapacidad intelectual
+poblacion_discapacitados <- full_join(poblacion_estado, pob_disc, by=c("ent")) %>% 
+                            mutate(disc_int = disc_int/personas,
+                                   disc_fis = disc_fis/personas,
+                                   disc_sens = disc_sens/personas,
+                                   disc_men = disc_men/personas) %>% 
+  select(ent, disc_int, disc_fis, disc_sens, disc_men)
+  
+poblacion_disc_intelectual <- poblacion_discapacitados %>% 
+    select(ent, disc_int)
 
-enigh_disc_int <- enigh[ which( enigh$disc1 == 6 | enigh$disc2 == 6 | enigh$disc3 == 6 | enigh$disc4 == 6 | enigh$disc5 == 6 | enigh$disc6 == 6 | enigh$disc7 == 6) , ]  
+poblacion_disc_fisica <- poblacion_discapacitados %>% 
+    select(ent, disc_fis)
 
-##Usar el factor de expansión para contar cuantas personas tienen la discapacidad de tipo 6 y hacer exactamente lo mismo para las personas que tienen las demás discapacidades.
+poblacion_disc_sensorial <- poblacion_discapacitados %>% 
+    select(ent, disc_sens)
+    
+poblacion_disc_mental <- poblacion_discapacitados %>% 
+    select(ent, disc_men)
+  
 
-##Prestación de guarderías
+##Acceso a guarderías. A nivel hogares donde al menos uno de los habitantes del hogar tiene la prestación de guarderias. No se puede dividir por sexo debido a que si se cuentan los hogares con la prestación hay casos en los que son más de un habitante y estos pueden ser hombres o mujeres.
 
-enigh_guarderías <- enigh %>% 
-  filter(pres_12 == 12)
+poblacion_temp_trab <-large_table(con, clean, enigh_trabajos) %>% filter(data_date=='2016-a')%>% 
+  select(folioviv, foliohog, numren, pres_6) %>%  retrieve_result()
 
-##Tiempo a trabajo no remunerado 
+concentrados <-large_table(con, clean, enigh_concentrados) %>% filter(data_date=='2016-a') %>%
+  select(folioviv, foliohog, ubica_geo, tot_integ, factor_hog, data_date) %>% retrieve_result() %>% 
+  mutate(folioviv = as.character(folioviv),
+         factor_hog = as.integer(factor_hog)) 
 
-enigh_trabajonr <- enigh %>% 
-  mutate(tiempo1 = hor_4*60) %>% 
-  mutate(tiempo2 = tiempo1 + min_4) %>% 
-  mutate(tiempo_tnr = tiempo2/60)
+concentrados_estado <- concentrados %>% 
+  mutate(ent = str_pad(string = folioviv, width = 10, side = 'left', pad = '0'),
+         ent = str_sub(ent, 1, 2))%>%
+  select(ent, factor_hog) %>% 
+  group_by(ent) %>% 
+  summarise_all(sum)
+
+guarderias <- poblacion_temp_trab %>% 
+  mutate(ac_guar = ifelse(pres_6 %in% c(6), 1, 0),
+         folioviv = as.character(folioviv),
+         ent = str_pad(string = folioviv, width = 10, side = 'left', pad = '0'),
+         ent = str_sub(ent, 1, 2)) %>%
+  filter(ac_guar == 1) %>% 
+  group_by(ent, folioviv, foliohog) %>% 
+  summarise(personas_guar_hogar =n())  
+
+hogares_guarderia <- inner_join(concentrados, guarderias, by=c("folioviv","foliohog")) %>% 
+  select(ent, folioviv, foliohog, factor_hog, personas_guar_hogar)  %>% 
+  mutate(factor_hog = as.integer(factor_hog),
+         tot_hog_guar = factor_hog*foliohog) %>%  
+  select(ent, tot_hog_guar) %>% 
+  group_by(ent) %>% 
+  summarise_all(sum)
+
+hogares_guarderias <- full_join(hogares_guarderia, concentrados_estado, by = c("ent")) %>% 
+  mutate(proporcion_hog_guar = tot_hog_guar/factor_hog) %>% 
+  select(ent, proporcion_hog_guar)
 
 ##Brecha salarial
 
-enigh_brecha <- enigh %>% 
-  filter(clave == p001 & p011)
-```
+ingresos_temp <-large_table(con, clean, enigh_ingresos) %>% filter(data_date=='2016-a')%>%
+  select(folioviv, foliohog, numren, clave, ing_1) %>%
+    retrieve_result()
+
+poblacion_temp <-large_table(con, clean, enigh_poblacion) %>% filter(data_date=='2016-a')%>% 
+  select(folioviv, foliohog, numren, sexo) %>%  retrieve_result()
+
+base_ingreso <- full_join(ingresos_temp, poblacion_temp, by = c("folioviv", "foliohog", "numren")) %>% 
+  filter(clave == c("P001", "P011", "P018")) %>% 
+  mutate(ent = str_pad(string = folioviv, width = 10, side = 'left', pad = '0'),
+         ent = str_sub(ent, 1, 2)) 
+
+base_ingreso <- base_ingreso %>% 
+  group_by(sexo, ent) %>% 
+  summarise(media_salario = mean(ing_1, na.rm = T))
+
+base_ing_mujeres <- base_ingreso %>% 
+  filter(sexo == 2) %>% 
+  subset(select = c(ent, media_salario))
+
+names(base_ing_mujeres)[names(base_ing_mujeres) == 'media_salario'] <- 'media_salario_mujeres'
+  
+base_ing_hombres <- base_ingreso %>% 
+  filter(sexo == 1) %>% 
+  subset(select = c(ent, media_salario))
+
+names(base_ing_hombres)[names(base_ing_hombres) == 'media_salario'] <- 'media_salario_hombres'
+
+brecha_salarial <- left_join(base_ing_hombres, base_ing_mujeres, by = c("ent")) %>% 
+  mutate(brecha_salario_mensual = media_salario_hombres-media_salario_mujeres) %>% 
+  subset(select = c(ent, brecha_salario_mensual)) 
+  
+## Join de vulnerabilidades de estado
+
+vulnerabilidades1 <- left_join(poblacion_disc_intelectual, poblacion_disc_fisica, by = "ent")
+vulnerabilidades2 <- left_join(vulnerabilidades1, poblacion_disc_sensorial, by = "ent")
+vulnerabilidades3 <- left_join(vulnerabilidades2, poblacion_disc_mental, by = "ent")
+vulnerabilidades4 <- left_join(vulnerabilidades3, hogares_guarderias, by = "ent")
+vulnerabilidades5 <- left_join(vulnerabilidades4, brecha_salarial, by = "ent")
+
+vulnerabilidades_numericas <- na.omit(scale(select_if(vulnerabilidades5, is.numeric)))
+
+create_reports(vulnerabilidades_numericas,
+               task_name = "vulnerabilidades_estado", 
+               output_dir = "../eda/reportes/vulnerabilidades_estado")
