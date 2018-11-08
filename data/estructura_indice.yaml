@@ -1,0 +1,208 @@
+Inform: 
+  Dimensión:
+
+    Amenazas y Exposición:
+      Subdimensión:
+        Fenómenos Naturales:
+          subsubdimensión:
+            Fenómeno Hidrometeorológico:
+              variable:
+                gp_inundac:
+                  tipo:
+                    - categorica_5
+                gp_sequia2:
+                  tipo:
+                    - categorica_5
+                gp_bajaste:
+                  tipo:
+                    - categorica_5
+                gp_ciclnes:
+                  tipo:
+                    - categorica_5
+                gp_tsunami:
+                  tipo:
+                    - categorica_5
+            Fenómeno Geológico:
+              variable:
+                g_suscelad:
+                  tipo:
+                    - categorica_5
+                gp_sismico:
+                  tipo:
+                    - categorica_5
+
+        Fenómenos Antropogénicos:
+          variable:
+            homicidio_culposo_tasa:
+              tipo:
+                - numerica
+            homicidio_dolos_tasao:
+              tipo:
+                - numerica
+            feminicidio_tasa:
+              tipo:
+                - numerica
+            secuestro_tasa:
+              tipo:
+                - numerica
+            robo_vehiculos_tasa:
+              tipo:
+                - numerica
+            violencia_familiar_tasa:
+              tipo:
+                - numerica
+            tasa_flot_esc:
+              tipo:
+                - numerica
+            tasa_flot_trab:
+              tipo:
+                - numerica
+            migracion_interna_reciente:
+              tipo:
+                - numerica
+            migracion_externa_reciente:
+              tipo:
+                - numerica
+
+    Falta de Capacidades de Respuesta:
+      Subdimensión:
+        Capacidad Institucional:
+          variable:
+            nd_spnn1:
+              tipo:
+                - categorica_nd_spnn1
+            nd_nsnn4:
+              tipo:
+                - categorica_nd_nsnn4
+            mec_tran:
+              tipo:
+                - categorica_mec_tran
+            inf_publ:
+              tipo:
+                - numerica
+            indice:
+              tipo:
+                - numerica
+
+        Capacidad financiera:
+          variable:
+            aut_cobr:
+              tipo:
+                - numerica
+            totalpo1:
+              tipo:
+                - numerica 
+            flexibilidad_financiera:
+              tipo:
+                - numerica
+                - mas_mejor 
+            capacidad_inversion:
+              tipo:
+                - numerica
+                - mas_mejor    
+            complejidad_2014:
+              tipo:
+                - numerica
+                - mas_mejor   
+
+        Capacidad de infraestructura:
+          variable:
+            n_usuarios:
+              tipo:
+                - numerica
+                - mas_mejor
+            densidad_medicos:
+              tipo:
+                - numerica 
+                - mas_mejor      
+            densidad_hospitales:
+              tipo:
+                - numerica
+                - mas_mejor
+            densidad_camas:
+              tipo:
+                - numerica
+                - mas_mejor
+            cobertura_dren:
+              tipo:
+                - numerica
+                - mas_mejor
+            basura_porcent_cab:
+              tipo:
+                - numerica
+                - mas_mejor
+            pct_viv_con_internet:
+              tipo:
+                - numerica
+                - mas_mejor
+            mortalidad_materna:
+              tipo:
+                - numerica
+            mortalidad_infantil:
+              tipo:
+                - numerica
+
+    Vulnerabilidades:
+      Subdimensión:
+        Vulnerabilidad Socioeconomica:
+          variable:
+            ic_rezedu_porcentaje:
+              tipo:
+                - numerica
+            ic_asalud_porcentaje:
+              tipo:
+                - numerica
+            ic_segsoc_porcentaje:
+              tipo:
+                - numerica
+            ic_cv_porcentaje:
+              tipo:
+                - numerica
+            vul_ing_porcentaje:
+              tipo:
+                - numerica
+            ic_sbv_porcentaje:
+              tipo:
+                - numerica
+            pobreza_porcentaje        :
+              tipo:
+                - numerica
+        Grupos sociales:
+          variable:
+            brecha_tasa_ocupados:
+              tipo:
+                - numerica
+            brecha_horas_cuidados:
+              tipo:
+                - numerica
+            p_mayores65:
+              tipo:
+                - numerica
+            p_menores5:
+              tipo:
+                - numerica
+            p_adultos:
+              tipo:
+                - numerica
+            p_menores:
+              tipo:
+                - numerica
+            p_indigenas:
+              tipo:
+                - numerica
+            p_afrodescendientes:
+              tipo:
+                - numerica
+            p_mujeres:
+              tipo:
+                - numerica
+            p_hombres:
+              tipo:
+                - numerica
+            proporcion_jefatura:
+              tipo:
+                - numerica
+            proporcion_unipersonales:
+              tipo:
+                - numerica
+                
