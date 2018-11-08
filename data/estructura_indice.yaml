@@ -4,32 +4,28 @@ Inform:
     Amenazas y Exposición:
       Subdimensión:
         Fenómenos Naturales:
-          subsubdimensión:
-            Fenómeno Hidrometeorológico:
-              variable:
-                gp_inundac:
-                  tipo:
-                    - categorica_5
-                gp_sequia2:
-                  tipo:
-                    - categorica_5
-                gp_bajaste:
-                  tipo:
-                    - categorica_5
-                gp_ciclnes:
-                  tipo:
-                    - categorica_5
-                gp_tsunami:
-                  tipo:
-                    - categorica_5
-            Fenómeno Geológico:
-              variable:
-                g_suscelad:
-                  tipo:
-                    - categorica_5
-                gp_sismico:
-                  tipo:
-                    - categorica_5
+          variable:
+            gp_inundac:
+              tipo:
+                - categorica_5
+            gp_sequia2:
+              tipo:
+                - categorica_5
+            gp_bajaste:
+              tipo:
+                - categorica_5
+            gp_ciclnes:
+              tipo:
+                - categorica_5
+            g_suscelad:
+              tipo:
+                - categorica_5
+            gp_sismico:
+              tipo:
+                - categorica_5
+            gp_tsunami:
+              tipo:
+                - categorica_5
 
         Fenómenos Antropogénicos:
           variable:
