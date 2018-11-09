@@ -21,19 +21,8 @@ inpc <- large_table(con,raw,inpc_estados) %>%
   filter(fecha == "2016-9") %>% 
   select(-fecha)
 
-# Sistema de alertas: liquidez y endeudamiento
-s_alertas <- large_table(con,raw,sistemas_alertas) %>% 
-  mutate(endeudamiento = (indicador1+indicador2+indicador3)/3,liquidez = 
-           ingresosdelibredisposicion/(pi+pi_2+obligacionesacortoplazoyproveedoresycontratistas),
-         nom_ent=entidadfederativa) %>% select(-entidadfederativa)
-s_alertas$nom_ent <- str_replace_all(s_alertas$nom_ent, c("Ciudad de México" = "Distrito Federal","Coahuila" = "Coahuila de Zaragoza","Veracruz" = "Veracruz de Ignacio de la Llave","Michoacán" = "Michoacán de Ocampo"))
-cves <- large_table(con, raw,geom_estados) %>% 
-  select(cve_ent,nom_ent)
-sistema_alertas <- left_join(cves, s_alertas, by = "nom_ent") %>% 
-  select(cve_ent,endeudamiento,liquidez)
-
 # Join
-amenazas_edo <- left_join(inpc, sistema_alertas, by = "cve_ent") %>% retrieve_result()
+amenazas_edo <- inpc
   
 # Generación de Reporte
 amenazas_numericas_edo <- na.omit(scale(select_if(amenazas_edo, is.numeric)))
@@ -52,7 +41,7 @@ CAPACIDADES
 # Selección y Construcción de Variables
 
 cves <- large_table(con, raw,geom_estados) %>% 
-  select(cve_ent,nom_ent)
+  select(cve_ent,nom_ent) 
 # Jueces y agentes fiscales por cada cien mil habitantes
 jueces <- large_table(con, raw, inegi_jueces) %>%
   mutate(nom_ent=entidadfederativa) %>%
@@ -68,6 +57,17 @@ agentes_fiscales$nom_ent <- str_replace_all(agentes_fiscales$nom_ent, c("Ciudad 
 inegi_agentes_fiscales <- left_join(cves, agentes_fiscales, by = "nom_ent") %>% select(-nom_ent) %>%
   retrieve_result()
 
+# Sistema de alertas: liquidez y endeudamiento
+s_alertas <- large_table(con,raw,sistemas_alertas) %>% 
+  mutate(endeudamiento = (indicador1+indicador2+indicador3)/3,liquidez = 
+           ingresosdelibredisposicion/(pi+pi_2+obligacionesacortoplazoyproveedoresycontratistas),
+         nom_ent=entidadfederativa) %>% select(-entidadfederativa)
+s_alertas$nom_ent <- str_replace_all(s_alertas$nom_ent, c("Ciudad de México" = "Distrito Federal","Coahuila" = "Coahuila de Zaragoza","Veracruz" = "Veracruz de Ignacio de la Llave","Michoacán" = "Michoacán de Ocampo"))
+cves <- large_table(con, raw,geom_estados) %>% 
+  select(cve_ent,nom_ent)
+sistema_alertas <- left_join(cves, s_alertas, by = "nom_ent") %>% 
+  select(cve_ent,endeudamiento,liquidez)
+
 # Índice de sistema político estable y funcional
 periodistas <- large_table(con,raw,imco_periodistas) %>% 
   rename(nom_ent=entidad_federativa) %>%
@@ -75,18 +75,18 @@ periodistas <- large_table(con,raw,imco_periodistas) %>%
 equidad_congreso <- large_table(con,raw,imco_equidad_congreso) %>% 
   rename(nom_ent=entidad_federativa) %>%
   select(-c(data_date,actualizacion_sedesol)) 
-corrupcion_estatal <- large_table(con,raw,imco_corrupcion_estatal) %>% 
-  rename(nom_ent=entidad_federativa) %>%
-  select(-c(data_date,actualizacion_sedesol))
+corrupcion_estatal <- large_table(con,raw,imco_corrupcion_estatal) %>%
+    mutate(nom_ent=entidad_federativa) %>%
+    select(-c(data_date,actualizacion_sedesol,entidad_federativa)) 
 partidos <- large_table(con,raw,imco_corrupcion_partidos) %>% 
-  select(-c(entidadfederativa,data_date,actualizacion_sedesol)) %>% retrieve_result()
+  select(-c(entidadfederativa,data_date,actualizacion_sedesol)) 
 corrupcion_partidos <- data.frame(nom_ent=c("Aguascalientes","Baja California","Baja California Sur","Campeche","Coahuila de Zaragoza","Colima","Chiapas","Chihuahua","Distrito Federal","Durango","Guanajuato","Guerrero","Hidalgo","Jalisco","México","Michoacán de Ocampo","Morelos","Nayarit","Nuevo León","Oaxaca","Puebla","Querétaro de Arteaga","Quintana Roo","San Luis Potosí","Sinaloa","Sonora","Tabasco","Tamaulipas","Tlaxcala","Veracruz de Ignacio de la Llave","Yucatán","Zacatecas"),partidos)
 matrimonio_igualitario <- large_table(con,raw,imco_matrimonio_igualitario) %>% 
   rename(nom_ent=estado) %>% 
-  select(-c(data_date,actualizacion_sedesol))
+  select(-c(data_date,actualizacion_sedesol)) 
 info <- large_table(con,raw,imco_info_publica) %>%
   mutate(cve_ent=as.character(entidad)) %>%
-  select(-c(data_date,actualizacion_sedesol,entidad)) %>% distinct()
+  select(-c(data_date,actualizacion_sedesol,entidad)) %>% distinct() 
 info_publica <- left_join(cves,info,by='cve_ent')
 participacion_ciudadana <- large_table(con,raw,imco_participacion_ciudadana) %>%
   rename(nom_ent=entidad) %>% 
@@ -98,12 +98,13 @@ indice_sist_politico <- left_join(corrupcion_estatal,equidad_congreso, by='nom_e
   left_join(matrimonio_igualitario,by='nom_ent') %>%
   left_join(info_publica,by='nom_ent') %>%
   left_join(corrupcion_sector,by='nom_ent') %>%
-  left_join(participacion_ciudadana,by='nom_ent') %>% retrieve_result() %>%
+  left_join(participacion_ciudadana,by='nom_ent')  %>%
   left_join(corrupcion_partidos,by='nom_ent')
 
 # Join
 capacidades_edo <- left_join(inegi_jueces, inegi_agentes_fiscales, by="cve_ent") %>% 
-  left_join(indice_sist_politico, by="cve_ent")
+  left_join(indice_sist_politico, by="cve_ent") %>%
+  left_join(s_alertas, by="cve_ent")
 
 # Generación de Reporte
 create_reports(capacidades_edo, 
@@ -123,7 +124,7 @@ poblacion <-large_table(con, clean, enigh_poblacion) %>% filter(data_date=='2016
   summarise(personas_hogar =n())
 
 concentrados <-large_table(con, clean, enigh_concentrados) %>% filter(data_date=='2016-a') %>%
-  select(folioviv, foliohog, ubica_geo, tot_integ, factor_hog, data_date) %>% retrieve_result() 
+  select(folioviv, foliohog, ubica_geo, tot_integ, factor_hog, data_date)  
 
 poblacion_estado <- full_join(concentrados, poblacion, by=c("folioviv", "foliohog")) %>% 
   select(folioviv, factor_hog, personas_hogar) %>% 
@@ -154,7 +155,7 @@ poblacion_disc <- poblacion_temp_disc %>%
   summarise_all(sum) 
 
 concentrados <-large_table(con, clean, enigh_concentrados) %>% filter(data_date=='2016-a') %>%
-  select(folioviv, foliohog, ubica_geo, tot_integ, factor_hog, data_date) %>% retrieve_result() %>% 
+  select(folioviv, foliohog, ubica_geo, tot_integ, factor_hog, data_date)  %>% 
   mutate(factor_hog = as.integer(factor_hog))
 
 pob_disc <- full_join(concentrados, poblacion_disc, by=c("folioviv", "foliohog")) %>% 
@@ -197,7 +198,7 @@ poblacion_temp_trab <-large_table(con, clean, enigh_trabajos) %>% filter(data_da
   select(folioviv, foliohog, numren, pres_6) %>%  retrieve_result()
 
 concentrados <-large_table(con, clean, enigh_concentrados) %>% filter(data_date=='2016-a') %>%
-  select(folioviv, foliohog, ubica_geo, tot_integ, factor_hog, data_date) %>% retrieve_result() %>% 
+  select(folioviv, foliohog, ubica_geo, tot_integ, factor_hog, data_date)  %>% 
   mutate(folioviv = as.character(folioviv),
          factor_hog = as.integer(factor_hog)) 
 
@@ -274,5 +275,5 @@ vulnerabilidades5 <- left_join(vulnerabilidades4, brecha_salarial, by = "ent")
 vulnerabilidades_numericas <- na.omit(scale(select_if(vulnerabilidades5, is.numeric)))
 
 create_reports(vulnerabilidades_numericas,
-               task_name = "vulnerabilidades_estado", 
-               output_dir = "../eda/reportes/vulnerabilidades_estado")
+               task_name = "vulnerabilidades_edo", 
+               output_dir = "../eda/reportes/vulnerabilidades")

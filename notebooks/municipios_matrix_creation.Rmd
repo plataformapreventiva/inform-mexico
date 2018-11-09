@@ -197,89 +197,35 @@ cngmd_proteccion_civil <- large_table(con,raw,cngmd_proteccion_civil) %>%
 
 cngmd_drenaje <- large_table(con,raw,cngmd_drenaje) %>%
   mutate(cve_muni = as.character(aps_folio),cobertura_dren=(sd_dren_cab+sd_dren_resto)/2)  %>%
-  select(cve_muni,cobertura_dren)
+  select(cve_muni,cobertura_dren) 
 
 cngmd_predial <- large_table(con,raw,cngmd_predial) %>%
   mutate(cve_muni = as.character(ubic_geo)) %>%
-  select(cve_muni,aut_cobr,totalpo1)
+  select(cve_muni,aut_cobr,totalpo1) 
 
 cngmd_recoleccion_basura <- large_table(con,raw,cngmd_recoleccion_basura) %>%
-  mutate(cve_muni = as.character(rsu_folio)) %>% select(cve_muni,basura_porcent_cab)
+  mutate(cve_muni = as.character(rsu_folio)) %>% select(cve_muni,basura_porcent_cab) %>% retrieve_result()
 
 cngmd_participacion_ciudadana <- large_table(con,raw,cngmd_participacion_ciudadana) %>% 
   mutate(cve_muni = as.character(ubic_geo)) %>%
   select(cve_muni,nd_nsnn1,tem_pciu)
 
-cngmd_transparencia_1 <- large_table(con,raw,cngmd_transparencia) %>%
-  select(ubic_geo,mec_tran) %>% distinct() %>% 
-  mutate(cve_muni = as.character(ubic_geo),
-         mec_tran = ifelse(mec_tran==1 & mec_tran==3 & mec_tran==6,1,
-                           ifelse((mec_tran==1 & mec_tran==3)||
-                                    (mec_tran==1 & mec_tran==6)||
-                                    (mec_tran==3 & mec_tran==6),2/3,
-                                  ifelse(mec_tran==1 || mec_tran==3||
-                                    mec_tran==6,1/3,0)))) %>% 
-  select(-ubic_geo) %>% group_by(cve_muni) %>%
-  summarise(mec_tran=sum(mec_tran,na.rm = TRUE))
+  cngmd_transparencia_1 <- large_table(con,raw,cngmd_transparencia) %>%
+    select(ubic_geo,mec_tran) %>% distinct() %>%
+    mutate(cve_muni = as.character(ubic_geo),
+           mec_tran = ifelse(mec_tran==1 || mec_tran==3 || mec_tran== 6,1/3,0)) %>%
+    select(-ubic_geo) %>% group_by(cve_muni) %>%
+    summarise_at(vars(mec_tran),sum, na.rm = TRUE)
+  
+  cngmd_transparencia_2 <- large_table(con,raw,cngmd_transparencia) %>%
+    select(ubic_geo,inf_publ) %>% distinct() %>%
+    mutate(cve_muni = as.character(ubic_geo),
+           inf_publ = ifelse(inf_publ==5 || inf_publ==22 || inf_publ==23 || inf_publ==42 || inf_publ==44,1/5,0)) %>%
+    select(-ubic_geo) %>% group_by(cve_muni) %>%
+    summarise_at(vars(inf_publ),sum, na.rm = TRUE)
+  
+  cngmd_transparencia <- cngmd_transparencia %>% left_join(cngmd_transparencia_2, by='cve_muni') %>% retrieve_result()
 
-cngmd_transparencia_2 <- large_table(con,raw,cngmd_transparencia) %>%
-  select(ubic_geo,inf_publ) %>% distinct() %>% 
-  mutate(cve_muni = as.character(ubic_geo),
-         inf_publ = ifelse(inf_publ==5 & inf_publ==22 & inf_publ==23 &
-                             inf_publ==42 & inf_publ==44,1,
-                           ifelse((inf_publ==5 & inf_publ==22 & inf_publ==23 &
-                                     inf_publ==42) || 
-                                    (inf_publ==5 & inf_publ==22 & inf_publ==23 &
-                                       inf_publ==44) ||
-                                    (inf_publ==5 & inf_publ==22 & inf_publ==42 &
-                                       inf_publ==44) ||
-                                    (inf_publ==5 & inf_publ==23 & inf_publ==42 &
-                                       inf_publ==44) ||
-                                    (inf_publ==22 & inf_publ==23 & inf_publ==42 &
-                                       inf_publ==44),4/5,
-                                  ifelse((inf_publ==5 & inf_publ==22 &
-                                            inf_publ==23) ||
-                                           (inf_publ==5 & inf_publ==22 &
-                                              inf_publ==42) ||
-                                           (inf_publ==5 & inf_publ==22 &
-                                              inf_publ==44) ||
-                                           (inf_publ==5 & inf_publ==23 &
-                                            inf_publ==42) ||
-                                           (inf_publ==5 & inf_publ==23 &
-                                            inf_publ==44) ||
-                                           (inf_publ==5 & inf_publ==42 &
-                                            inf_publ==44) ||
-                                           (inf_publ==22 & inf_publ==23 &
-                                            inf_publ==42) ||
-                                           (inf_publ==22 & inf_publ==23 &
-                                            inf_publ==44)||
-                                           (inf_publ==22 & inf_publ==42 &
-                                            inf_publ==44) ||
-                                           (inf_publ==23 & inf_publ==42 &
-                                            inf_publ==44),3/5,
-                                         ifelse((inf_publ==5 & inf_publ==22)||
-                                                  (inf_publ==5 & inf_publ==23)||
-                                                  (inf_publ==5 & inf_publ==42)||
-                                                  (inf_publ==5 & inf_publ==44)||
-                                                  (inf_publ==22 & inf_publ==23)||
-                                                  (inf_publ==22 & inf_publ==42)||
-                                                  (inf_publ==22 & inf_publ==44)||
-                                                  (inf_publ==23 & inf_publ==42)||
-                                                  (inf_publ==23 & inf_publ==44)||
-                                                  (inf_publ==42 & inf_publ==44),
-                                                2/5,
-                                                ifelse(inf_publ==5 || 
-                                                         inf_publ==22 ||
-                                                         inf_publ==23 ||
-                                                         inf_publ==42 ||
-                                                         inf_publ==44,
-                                                       1/5,0)))))) %>% 
-  select(-ubic_geo) %>% group_by(cve_muni) %>%
-  summarise(inf_publ=sum(inf_publ,na.rm = TRUE))
-
-cngmd_transparencia <- left_join(cngmd_transparencia_1,
-                                 cngmd_transparencia_2,
-                                 by="cve_muni")
 # Join
 capacidades <- left_join(complejidad,internet, by="cve_muni") %>%
   left_join(cngmd_proteccion_civil, by="cve_muni") %>%
