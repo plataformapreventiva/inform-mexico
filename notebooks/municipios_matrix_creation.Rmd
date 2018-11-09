@@ -1,0 +1,524 @@
+---
+title: "municipios_matrix_creation"
+output: html_document
+---
+
+```{r message=FALSE, warning=FALSE, results='hide'}
+options(scipen=10000)
+source("../utils.R")
+```
+###########################################################################
+AMENAZAS
+###########################################################################
+
+```{r, results = "hide"}
+# Cenapred 
+cenapred <- large_table(con,clean,cenapred_app_municipios) %>%
+  select(cve_muni,gp_inundac,gp_sequia2,gp_bajaste,gp_ciclnes,g_suscelad,gp_sismico,gp_tsunami) %>%
+  retrieve_result()
+
+#Intercensal 2015
+intercensal <- dbGetQuery(con,'  
+  SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni, 
+  mun_asi,
+  ent_pais_asi,
+  mun_trab,
+  ent_pais_trab,
+  factor,
+  sum (factor) as poblacion_mun,
+  sum(CASE 
+        WHEN nom_mun != nom_mun_res10 
+            THEN factor 
+            ELSE 0 
+        END) as migrantes_internos_recientes,
+  sum(CASE 
+        WHEN CAST(ent_pais_res10 as integer) > 33
+            THEN factor 
+            ELSE 0 
+        END) as migrantes
+  FROM raw.intercensal_personas_2015
+  GROUP BY cve_muni, mun_asi,
+  ent_pais_asi,
+  mun_trab,
+  ent_pais_trab,
+  factor')
+
+#MIGRACION INTERNA Y EXTERNA RECIENTE
+intercensal_migracion_reciente <- intercensal %>% 
+  mutate(migracion_interna_reciente = as.double(migrantes_internos_recientes)/poblacion_mun) %>%
+  mutate(migracion_externa_reciente = as.double(migrantes)/poblacion_mun) %>%
+  select(cve_muni,migracion_interna_reciente,migracion_externa_reciente)
+
+#POBLACION FLOTANTE
+flot_esc <- intercensal %>% 
+  filter(ent_pais_asi < 33) 
+
+#Población flotante por municipio debido a la escuela
+estado_esc <- str_pad(flot_esc$ent_pais_asi, 2, pad = "0")
+municipio_esc <- str_pad(flot_esc$mun_asi, 3, pad = "0")
+factor_esc <- flot_esc$factor
+cve_muni <- flot_esc$cve_muni
+
+poblacion_flotante_esc <- data.frame(estado_esc, municipio_esc, 
+                                     factor_esc, cve_muni, stringsAsFactors = FALSE)
+
+poblacion_flotante_esc$cve_muni_esc <- do.call(paste, c(poblacion_flotante_esc[c("estado_esc", "municipio_esc")], sep = ""))
+
+pob_flot_esc <- mutate(poblacion_flotante_esc, flotantes_esc = ifelse(cve_muni_esc == cve_muni, 0, 1))  %>% 
+  filter(flotantes_esc == 1)  
+pob_flot_esc <- subset(pob_flot_esc, select = c(cve_muni_esc, factor_esc))    
+
+poblacion_flotante_escuela <- group_by(pob_flot_esc, cve_muni_esc)  %>%
+                             summarise_all(sum)
+
+#Población flotante por municipio debido al trabajo
+
+estado_trab <- str_pad(flot_esc$ent_pais_trab, 2, pad = "0")
+municipio_trab <- str_pad(flot_esc$mun_trab, 3, pad = "0")
+factor_trab <- flot_esc$factor
+cve_muni <- flot_esc$cve_muni
+
+poblacion_flotante_trab <- data.frame(estado_trab, municipio_trab, 
+                                     factor_trab, cve_muni, stringsAsFactors = FALSE)
+
+poblacion_flotante_trab$cve_muni_trab <- do.call(paste, c(poblacion_flotante_trab[c("estado_trab", "municipio_trab")], sep = ""))
+
+pob_flot_trab <- mutate(poblacion_flotante_trab, flotantes_trab = ifelse(cve_muni_trab == cve_muni, 0, 1))  %>% 
+  filter(flotantes_trab == 1)  
+pob_flot_trab <- subset(pob_flot_trab, select = c(cve_muni_trab, factor_trab))
+
+poblacion_flotante_trabajo <- group_by(pob_flot_trab, cve_muni_trab)  %>% 
+  summarise_all(sum)
+
+#Población por municipio
+
+pob_mun <- subset(intercensal, select = c(cve_muni, factor))
+poblacion_municipio <- group_by(pob_mun, cve_muni)  %>% 
+  summarise_all(sum)
+
+##Join flotantes
+
+flotantes <- left_join(poblacion_flotante_escuela, poblacion_flotante_trabajo,
+                       by = c("cve_muni_esc"="cve_muni_trab")) %>%
+  group_by(cve_muni_esc) %>% 
+  summarise_all(sum)
+colnames(flotantes)[1]<-"cve_muni"
+
+rm(cve_muni, estado_esc, estado_trab, factor_esc, factor_trab,
+   municipio_esc, municipio_trab,flot_esc,pob_flot_esc,pob_flot_trab,
+   poblacion_flotante_esc,poblacion_flotante_escuela,intercensal,
+   poblacion_flotante_trab,poblacion_flotante_trabajo,pob_mun,poblacion_municipio)
+
+# Delitos
+delitos <- large_table(con,features, crimenes_tasas) %>%
+  select(cve_muni,homicidio_culposo,homicidio_doloso,feminicidio,secuestro,robo_vehiculos,violencia_familiar,incidencia_total) %>%
+  group_by(cve_muni) %>%
+    summarise(homicidio_culposo=avg(homicidio_culposo),homicidio_doloso=avg(homicidio_doloso),feminicidio=avg(feminicidio),secuestro=avg(secuestro),robo_vehiculos=avg(robo_vehiculos),violencia_familiar=avg(violencia_familiar),incidencia_total = avg(incidencia_total)) %>% retrieve_result()
+
+#Join
+amenazas <- left_join(cenapred,delitos, by="cve_muni") %>%
+   left_join(flotantes, by="cve_muni") %>%
+   left_join(intercensal_migracion_reciente, by="cve_muni")
+
+amenazas_numericas <- na.omit(scale(select_if(amenazas, is.numeric)))
+
+# Generación de Reporte
+create_reports(amenazas, 
+               task_name = "amenazas", 
+               output_dir = "../eda/reportes/amenazas")
+
+create_reports(amenazas_numericas, 
+               task_name = "amenazas_numericas", 
+               output_dir = "../eda/reportes/amenazas")
+
+```
+
+###########################################################################
+CAPACIDADES
+###########################################################################
+
+```{r,, results = "hide"}
+
+# Selección y Construcción de Variables
+
+# CFE 
+cfe <- dbGetQuery(con,'
+  SELECT LPAD(cveinegi::text, 2, \'0\') || LPAD(cvemun::text, 3, \'0\') as cve_muni, sum(num) as n_usuarios
+  FROM raw.cfe
+  WHERE tipo like \'Usuarios\'
+  GROUP BY cve_muni')
+
+# Internet
+internet <- large_table(con,raw,internet_municipios) %>% 
+  select(cve_muni,pct_viv_con_internet)  
+
+#Complejidad Economica, Diversificación Económica, Productividad de la tierra
+complejidad <- large_table(con,raw,complejidad_municipios) %>% select(cve_muni, complejidad_2014)
+
+# Flexibilidad financiera, Capacidad de Inversión
+indicadores_finanzas <- large_table(con,raw,indicadores_financieros_municipios) %>%
+  filter(anio == 2014) %>%
+  select(cve_muni,flexibilidad_financiera,capacidad_inversion) 
+
+# Índice de Reglamentación
+indice_reglamentacion <- large_table(con,raw,indice_reglamentacion_municipios) %>% 
+  filter(anio == 2014) %>%
+  select(cve_muni,indice)
+
+# Densidad de Medicos, Densidad de camas, Densidad de Hospitales
+hospitales <- dbGetQuery(con,'
+  SELECT LPAD(claveentidad::text, 2, \'0\') || LPAD(clavemunicipio::text, 3, \'0\') as cve_muni, 
+  avg(CAST(e1819+e20 as float)/1000) as densidad_medicos, 
+  avg(CAST(unidades+e13 as float)/1000) as densidad_hospitales, 
+  avg(CAST(e14+e15 as float)/1000) as densidad_camas
+  FROM raw.recursos_hospitales
+  GROUP BY cve_muni')
+
+# Defunciones
+defunciones_grales <- dbGetQuery(con,'
+  SELECT LPAD(ent_ocurr::text, 2, \'0\') || LPAD(mun_ocurr::text, 3, \'0\') as cve_muni, 
+  sum(CASE 
+      WHEN CAST(edad as integer) < 4000
+          THEN 1 
+          ELSE 0 
+      END) as infant, 
+  sum(CASE 
+      WHEN causa_def LIKE \'O%\'
+          THEN 1 
+          ELSE 0 
+      END) as materna
+  FROM raw.defunciones_generales
+  GROUP BY cve_muni')
+
+#Censo Nacional de Gobiernos Municipales y Delegacionales
+cngmd_proteccion_civil <- large_table(con,raw,cngmd_proteccion_civil) %>%
+  mutate(cve_muni = as.character(ubic_geo)) %>%
+  select(cve_muni, nd_spnn1,nd_nsnn4) 
+
+cngmd_drenaje <- large_table(con,raw,cngmd_drenaje) %>%
+  mutate(cve_muni = as.character(aps_folio),cobertura_dren=(sd_dren_cab+sd_dren_resto)/2)  %>%
+  select(cve_muni,cobertura_dren)
+
+cngmd_predial <- large_table(con,raw,cngmd_predial) %>%
+  mutate(cve_muni = as.character(ubic_geo)) %>%
+  select(cve_muni,aut_cobr,totalpo1)
+
+cngmd_recoleccion_basura <- large_table(con,raw,cngmd_recoleccion_basura) %>%
+  mutate(cve_muni = as.character(rsu_folio)) %>% select(cve_muni,basura_porcent_cab)
+
+cngmd_participacion_ciudadana <- large_table(con,raw,cngmd_participacion_ciudadana) %>% 
+  mutate(cve_muni = as.character(ubic_geo)) %>%
+  select(cve_muni,nd_nsnn1,tem_pciu)
+
+cngmd_transparencia_1 <- large_table(con,raw,cngmd_transparencia) %>%
+  select(ubic_geo,mec_tran) %>% distinct() %>% 
+  mutate(cve_muni = as.character(ubic_geo),
+         mec_tran = ifelse(mec_tran==1 & mec_tran==3 & mec_tran==6,1,
+                           ifelse((mec_tran==1 & mec_tran==3)||
+                                    (mec_tran==1 & mec_tran==6)||
+                                    (mec_tran==3 & mec_tran==6),2/3,
+                                  ifelse(mec_tran==1 || mec_tran==3||
+                                    mec_tran==6,1/3,0)))) %>% 
+  select(-ubic_geo) %>% group_by(cve_muni) %>%
+  summarise(mec_tran=sum(mec_tran,na.rm = TRUE))
+
+cngmd_transparencia_2 <- large_table(con,raw,cngmd_transparencia) %>%
+  select(ubic_geo,inf_publ) %>% distinct() %>% 
+  mutate(cve_muni = as.character(ubic_geo),
+         inf_publ = ifelse(inf_publ==5 & inf_publ==22 & inf_publ==23 &
+                             inf_publ==42 & inf_publ==44,1,
+                           ifelse((inf_publ==5 & inf_publ==22 & inf_publ==23 &
+                                     inf_publ==42) || 
+                                    (inf_publ==5 & inf_publ==22 & inf_publ==23 &
+                                       inf_publ==44) ||
+                                    (inf_publ==5 & inf_publ==22 & inf_publ==42 &
+                                       inf_publ==44) ||
+                                    (inf_publ==5 & inf_publ==23 & inf_publ==42 &
+                                       inf_publ==44) ||
+                                    (inf_publ==22 & inf_publ==23 & inf_publ==42 &
+                                       inf_publ==44),4/5,
+                                  ifelse((inf_publ==5 & inf_publ==22 &
+                                            inf_publ==23) ||
+                                           (inf_publ==5 & inf_publ==22 &
+                                              inf_publ==42) ||
+                                           (inf_publ==5 & inf_publ==22 &
+                                              inf_publ==44) ||
+                                           (inf_publ==5 & inf_publ==23 &
+                                            inf_publ==42) ||
+                                           (inf_publ==5 & inf_publ==23 &
+                                            inf_publ==44) ||
+                                           (inf_publ==5 & inf_publ==42 &
+                                            inf_publ==44) ||
+                                           (inf_publ==22 & inf_publ==23 &
+                                            inf_publ==42) ||
+                                           (inf_publ==22 & inf_publ==23 &
+                                            inf_publ==44)||
+                                           (inf_publ==22 & inf_publ==42 &
+                                            inf_publ==44) ||
+                                           (inf_publ==23 & inf_publ==42 &
+                                            inf_publ==44),3/5,
+                                         ifelse((inf_publ==5 & inf_publ==22)||
+                                                  (inf_publ==5 & inf_publ==23)||
+                                                  (inf_publ==5 & inf_publ==42)||
+                                                  (inf_publ==5 & inf_publ==44)||
+                                                  (inf_publ==22 & inf_publ==23)||
+                                                  (inf_publ==22 & inf_publ==42)||
+                                                  (inf_publ==22 & inf_publ==44)||
+                                                  (inf_publ==23 & inf_publ==42)||
+                                                  (inf_publ==23 & inf_publ==44)||
+                                                  (inf_publ==42 & inf_publ==44),
+                                                2/5,
+                                                ifelse(inf_publ==5 || 
+                                                         inf_publ==22 ||
+                                                         inf_publ==23 ||
+                                                         inf_publ==42 ||
+                                                         inf_publ==44,
+                                                       1/5,0)))))) %>% 
+  select(-ubic_geo) %>% group_by(cve_muni) %>%
+  summarise(inf_publ=sum(inf_publ,na.rm = TRUE))
+
+cngmd_transparencia <- left_join(cngmd_transparencia_1,
+                                 cngmd_transparencia_2,
+                                 by="cve_muni")
+# Join
+capacidades <- left_join(complejidad,internet, by="cve_muni") %>%
+  left_join(cngmd_proteccion_civil, by="cve_muni") %>%
+  left_join(cngmd_drenaje, by="cve_muni") %>% 
+  left_join(cngmd_predial, by="cve_muni") %>% 
+  left_join(cngmd_recoleccion_basura, by="cve_muni") %>%
+  left_join(cngmd_participacion_ciudadana, by="cve_muni") %>%
+  left_join(cngmd_transparencia, by="cve_muni") %>%
+  retrieve_result()
+aux <- left_join(indice_reglamentacion,indicadores_finanzas,by= "cve_muni") %>% retrieve_result()
+capacidades <- capacidades %>%
+  left_join(defunciones_grales, by="cve_muni") %>%
+  left_join(cfe, by="cve_muni") %>%
+  left_join(aux, by="cve_muni") %>%
+  left_join(hospitales, by="cve_muni") 
+
+# Generación de Reporte
+create_reports(capacidades %>% select(-c(cve_muni,totalpo1)), 
+               task_name = "capacidades", 
+               output_dir = "../eda/reportes/capacidades")
+```
+
+###########################################################################
+VULNERABILIDADES
+###########################################################################
+
+```{r}
+#CONEVAL
+coneval <- large_table(con,clean,coneval_municipios) %>%   
+  filter(data_date == "2015-a") %>% 
+  select(cve_muni, ic_rezedu_porcentaje, ic_asalud_porcentaje, ic_segsoc_porcentaje, ic_cv_porcentaje,
+         vul_ing_porcentaje, ic_sbv_porcentaje, pobreza_porcentaje) %>% retrieve_result()
+
+#GRUPOS ETARIOS
+#MAYORES DE 65, MENORES DE 5 AÑOS, ADULTOS 19-29, RELACION DE DEPENDENCIA, AUTOADSCRIPCIÓN,
+#LENGUA INDÍGENA, AFRODESCENDIENTE, MUJERES, HOMBRES
+
+intercensal <- dbGetQuery(con,'
+                          SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni, 
+                          sum (factor) as poblacion_mun,
+                          sum(CASE 
+                          WHEN CAST(edad as integer) > 64
+                          THEN factor 
+                          ELSE 0 
+                          END) as mayores65,
+                          sum(CASE 
+                          WHEN CAST(edad as integer) < 6
+                          THEN factor 
+                          ELSE 0 
+                          END) as menores5,
+                          sum(CASE 
+                          WHEN CAST(edad as integer) < 30 AND edad >18
+                          THEN factor 
+                          ELSE 0 
+                          END) as adultos,
+                          sum(CASE 
+                          WHEN CAST(edad as integer) < 15
+                          THEN factor 
+                          ELSE 0 
+                          END) as menores,
+                          sum(CASE 
+                          WHEN CAST(edad as integer) > 64
+                          THEN factor 
+                          ELSE 0 
+                          END) as mayores,
+                          sum(CASE 
+                          WHEN CAST(perte_indigena as integer) = 1 OR CAST(perte_indigena as integer) = 2
+                          THEN factor 
+                          ELSE 0 
+                          END) as indigenas,
+                          sum(CASE 
+                          WHEN CAST(hlengua as integer) = 1 
+                          THEN factor 
+                          ELSE 0 
+                          END) as lengua_indigena,
+                          sum(CASE 
+                          WHEN CAST(afrodes as integer) = 1 OR CAST(afrodes as integer) = 2 
+                          THEN factor 
+                          ELSE 0 
+                          END) as afrodescendientes,
+                          sum(CASE 
+                          WHEN CAST(sexo as integer) = 3 
+                          THEN factor 
+                          ELSE 0 
+                          END) as mujeres,
+                          sum(CASE 
+                          WHEN CAST(sexo as integer) = 1 
+                          THEN factor 
+                          ELSE 0 
+                          END) as hombres
+                          FROM raw.intercensal_personas_2015
+                          GROUP BY cve_muni')
+
+poblacion <- intercensal %>% 
+  mutate(poblacion_mayor = as.double(mayores65)/poblacion_mun) %>% 
+  mutate(poblacion_infantil = as.double(menores5)/poblacion_mun) %>% 
+  mutate(poblacion_adulta = as.double(adultos)/poblacion_mun) %>% 
+  mutate(poblacion_dependiente = menores+mayores) %>%
+  mutate(proporcion_dependiente = as.double(poblacion_dependiente)/poblacion_mun) %>% 
+  mutate(proporcion_indigena = as.double(indigenas)/poblacion_mun) %>% 
+  mutate(proporcion_lengua_indigena = as.double(lengua_indigena)/poblacion_mun) %>% 
+  mutate(proporcion_afrodescendientes = as.double(afrodescendientes)/poblacion_mun) %>% 
+  mutate(proporcion_mujeres = as.double(mujeres)/poblacion_mun) %>% 
+  mutate(proporcion_hombres = as.double(hombres)/poblacion_mun) %>% 
+  select(cve_muni, poblacion_infantil,poblacion_mayor,poblacion_adulta,poblacion_dependiente,
+         proporcion_indigena,proporcion_lengua_indigena,proporcion_afrodescendientes,
+         proporcion_hombres,proporcion_mujeres) 
+
+#MUJERES EN EL MERCADO LABORAL
+intercensal <- dbGetQuery(con,'
+                          SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni,
+                          sexo,
+                          edad,
+                          conact, 
+                          factor
+                          FROM raw.intercensal_personas_2015
+                          ')
+
+intercensal_ocupadas <- intercensal %>% 
+  filter(sexo == 3) %>% 
+  mutate(mujeres = ifelse(sexo == 3, 1, 0),
+         edad_trabajar = ifelse(edad > 14, 1, 0),
+         ocupadas = ifelse(conact == 10 & 11 & 12 & 13 & 14 & 15 & 16, 1, 0)) %>% 
+  mutate(mujeres_f = mujeres*factor,
+         edad_trabajar_f = edad_trabajar*factor,
+         ocupadas_f = ocupadas*factor) 
+
+intercensal_ocupadas[is.na(intercensal_ocupadas)] <- 0
+
+intercensal_ocupadas <- intercensal_ocupadas %>% 
+  group_by(cve_muni)  %>% 
+  summarise_all(sum)
+
+intercensal_ocupadas <- mutate(intercensal_ocupadas, 
+                               proporcion_mujeres_ocupadas = ocupadas_f/edad_trabajar_f,
+                               porcentaje_mujeres_ocupadas = proporcion_mujeres_ocupadas*100)
+
+intercensal_ocupadas <- subset(intercensal_ocupadas, 
+                               select = c(cve_muni, proporcion_mujeres_ocupadas))
+
+#HOMBRES EN EL MERCADO LABORAL
+
+intercensal_ocupados <- intercensal %>% 
+  filter(sexo == 1) %>% 
+  mutate(hombres = ifelse(sexo == 1, 1, 0),
+         edad_trabajar = ifelse(edad > 14, 1, 0),
+         ocupados = ifelse(conact == 10 & 11 & 12 & 13 & 14 & 15 & 16, 1, 0)) %>% 
+  mutate(hombres_f = hombres*factor,
+         edad_trabajar_f = edad_trabajar*factor,
+         ocupados_f = ocupados*factor) 
+
+intercensal_ocupados[is.na(intercensal_ocupados)] <- 0
+
+intercensal_ocupados <- intercensal_ocupados %>% 
+  group_by(cve_muni)  %>% 
+  summarise_all(sum)
+
+intercensal_ocupados <- mutate(intercensal_ocupados, 
+                               proporcion_hombres_ocupados = ocupados_f/edad_trabajar_f,
+                               porcentaje_hombres_ocupados = proporcion_hombres_ocupados*100)
+
+intercensal_ocupados <- subset(intercensal_ocupados, 
+                               select = c(cve_muni, proporcion_hombres_ocupados))
+
+ocupados <- left_join(intercensal_ocupadas,intercensal_ocupados, by = "cve_muni")
+rm(intercensal_ocupadas,intercensal_ocupados,intercensal)
+
+#JEFATURA FEMENINA, HOGARES UNIPERSONALES
+intercensal_viviendas <- dbGetQuery(con,'  
+                                    SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni,
+                                    sum (factor) as viviendas_mun,
+                                    sum(CASE 
+                                    WHEN CAST(jefe_sexo as integer) = 3
+                                    THEN factor 
+                                    ELSE 0 
+                                    END) as jefatura_fem,
+                                    sum(CASE 
+                                    WHEN CAST(tipohog as integer) = 5
+                                    THEN factor 
+                                    ELSE 0 
+                                    END) as unipersonales
+                                    FROM raw.intercensal_viviendas_2015
+                                    GROUP BY cve_muni')
+
+intercensal_hogares <- intercensal_viviendas %>% 
+  mutate(proporcion_unipersonales = as.double(unipersonales)/viviendas_mun) %>% 
+  mutate(proporcion_jefatura = as.double(jefatura_fem)/viviendas_mun) %>% 
+  select(cve_muni, proporcion_jefatura,proporcion_unipersonales)
+
+rm(intercensal_viviendas)
+
+##Brecha tiempo de cuidados
+intercensal <- dbGetQuery(con,'
+                          SELECT LPAD(ent::text, 2, \'0\') || LPAD(mun::text, 3, \'0\') as cve_muni,
+                          sexo,
+                          acti_sin_pago1,
+                          acti_sin_pago2,
+                          acti_sin_pago3,
+                          acti_sin_pago4,
+                          acti_sin_pago5,
+                          acti_sin_pago6,
+                          acti_sin_pago7,
+                          acti_sin_pago8,
+                          factor
+                          FROM raw.intercensal_personas_2015
+                          ')
+
+intercensal$total_horas = rowSums (intercensal[ , 3:10])
+
+intercensal <- intercensal %>% 
+  select(cve_muni, sexo, factor, total_horas) %>%  
+  group_by(sexo, cve_muni) %>% 
+  summarise(media_horas_cuidados = mean(total_horas, na.rm = T))
+
+base_cuidados_mujeres <- intercensal %>% 
+  filter(sexo == 3) %>% 
+  subset(select = c(cve_muni, media_horas_cuidados))
+
+names(base_cuidados_mujeres)[names(base_cuidados_mujeres) == 'media_horas_cuidados'] <- 'media_horas_cuidados_mujeres'
+
+base_cuidados_hombres <- intercensal %>% 
+  filter(sexo == 1) %>% 
+  subset(select = c(cve_muni, media_horas_cuidados))
+
+names(base_cuidados_hombres)[names(base_cuidados_hombres) == 'media_horas_cuidados'] <- 'media_horas_cuidados_hombres'
+
+brecha_horas_cuidados <- left_join(base_cuidados_hombres, base_cuidados_mujeres, by = c("cve_muni")) %>% 
+  mutate(brecha_horas_cuidados = media_horas_cuidados_mujeres-media_horas_cuidados_hombres) %>% 
+  subset(select = c(cve_muni, brecha_horas_cuidados))
+
+##JOIN VULNERABILIDADES
+
+vulnerabilidades <- left_join(coneval, poblacion, by = "cve_muni") %>%
+  left_join(ocupados, by = "cve_muni") %>% 
+  left_join(intercensal_hogares, by = "cve_muni") %>% 
+  left_join(brecha_horas_cuidados, by = "cve_muni")
+
+vulnerabilidades_numericas <- na.omit(scale(select_if(vulnerabilidades, is.numeric)))
+
+create_reports(vulnerabilidades_numericas,
+               task_name = "vulnerabilidades", 
+               output_dir = "../eda/reportes/vulnerabilidades")
