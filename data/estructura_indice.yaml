@@ -1,204 +1,247 @@
 Inform: 
   Dimensión:
-
-    Amenazas y Exposición:
+    1. Amenazas y Exposición:
       Subdimensión:
-        Fenómenos Naturales:
-          variable:
-            gp_inundac:
-              tipo:
-                - categorica_5
-            gp_sequia2:
-              tipo:
-                - categorica_5
-            gp_bajaste:
-              tipo:
-                - categorica_5
-            gp_ciclnes:
-              tipo:
-                - categorica_5
-            g_suscelad:
-              tipo:
-                - categorica_5
-            gp_sismico:
-              tipo:
-                - categorica_5
-            gp_tsunami:
-              tipo:
-                - categorica_5
-
-        Fenómenos Antropogénicos:
-          variable:
-            homicidio_culposo_tasa:
-              tipo:
-                - numerica
-            homicidio_dolos_tasao:
-              tipo:
-                - numerica
-            feminicidio_tasa:
-              tipo:
-                - numerica
-            secuestro_tasa:
-              tipo:
-                - numerica
-            robo_vehiculos_tasa:
-              tipo:
-                - numerica
-            violencia_familiar_tasa:
-              tipo:
-                - numerica
-            tasa_flot_esc:
-              tipo:
-                - numerica
-            tasa_flot_trab:
-              tipo:
-                - numerica
-            migracion_interna_reciente:
-              tipo:
-                - numerica
-            migracion_externa_reciente:
-              tipo:
-                - numerica
-
-    Falta de Capacidades de Respuesta:
+        1.1 Fenómenos Naturales:
+          subsubdimensión:
+            1.1.1 Fenómeno Hidrometeorológico:
+              variable:
+                gp_inundac:
+                  tipo:
+                    - categorica_5
+                gp_sequia2:
+                  tipo:
+                    - categorica_5
+                gp_bajaste:
+                  tipo:
+                    - categorica_5
+                gp_ciclnes:
+                  tipo:
+                    - categorica_5
+                gp_tsunami:
+                  tipo:
+                    - categorica_5
+            1.1.2 Fenómeno Geológico:
+              variable:
+                g_suscelad:
+                  tipo:
+                    - categorica_5
+                gp_sismico:
+                  tipo:
+                    - categorica_5
+        1.2 Fenómenos Antropogénicos:
+          subsubdimensión:
+            1.2.1 Violencia y Delincuencia:
+              variable:
+                homicidio_culposo_tasa:
+                  tipo:
+                    - numerica
+                homicidio_dolos_tasao:
+                  tipo:
+                    - numerica
+                feminicidio_tasa:
+                  tipo:
+                    - numerica
+                secuestro_tasa:
+                  tipo:
+                    - numerica
+                robo_vehiculos_tasa:
+                  tipo:
+                    - numerica
+                violencia_familiar_tasa:
+                  tipo:
+                    - numerica
+            1.2.2. Amenazas Demográficas:
+              variable:
+                tasa_flot_esc:
+                  tipo:
+                    - numerica
+                tasa_flot_trab:
+                  tipo:
+                    - numerica
+                migracion_interna_reciente:
+                  tipo:
+                    - numerica
+                migracion_externa_reciente:
+                  tipo:
+                    - numerica
+    2. Falta de Capacidades de Respuesta:
       Subdimensión:
-        Capacidad Institucional:
-          variable:
-            nd_spnn1:
-              tipo:
-                - categorica_nd_spnn1
-            nd_nsnn4:
-              tipo:
-                - categorica_nd_nsnn4
-            mec_tran:
-              tipo:
-                - categorica_mec_tran
-            inf_publ:
-              tipo:
-                - numerica
-            indice:
-              tipo:
-                - numerica
-
-        Capacidad financiera:
-          variable:
-            aut_cobr:
-              tipo:
-                - numerica
-            totalpo1:
-              tipo:
-                - numerica 
-            flexibilidad_financiera:
-              tipo:
-                - numerica
-                - mas_mejor 
-            capacidad_inversion:
-              tipo:
-                - numerica
-                - mas_mejor    
-            complejidad_2014:
-              tipo:
-                - numerica
-                - mas_mejor   
-
-        Capacidad de infraestructura:
-          variable:
-            n_usuarios:
-              tipo:
-                - numerica
-                - mas_mejor
-            densidad_medicos:
-              tipo:
-                - numerica 
-                - mas_mejor      
-            densidad_hospitales:
-              tipo:
-                - numerica
-                - mas_mejor
-            densidad_camas:
-              tipo:
-                - numerica
-                - mas_mejor
-            cobertura_dren:
-              tipo:
-                - numerica
-                - mas_mejor
-            basura_porcent_cab:
-              tipo:
-                - numerica
-                - mas_mejor
-            pct_viv_con_internet:
-              tipo:
-                - numerica
-                - mas_mejor
-            mortalidad_materna:
-              tipo:
-                - numerica
-            mortalidad_infantil:
-              tipo:
-                - numerica
-
-    Vulnerabilidades:
+        2.1 Capacidad Institucional:
+          subsubdimensión:
+            2.1.1 Gestión de Riesgo de Desastre:
+              variable:
+                nd_spnn1:
+                  tipo:
+                    - categorica_nd_spnn1
+                nd_nsnn4:
+                  tipo:
+                    - categorica_nd_nsnn4
+            2.1.2 Acceso a la Justicia:
+              variable:
+                mec_tran:
+                  tipo:
+                    - categorica_mec_tran
+            2.1.3 Reglamentación Básica:
+              variable:
+                inf_publ:
+                  tipo:
+                    - numerica
+            2.1.4 Gobernabilidad:
+              variable:
+                indice:
+                  tipo:
+                    - numerica
+        2.2 Capacidad financiera:
+          subsubdimensión:
+            2.2.1 Cobertura Institucional:
+              variable:
+                aut_cobr:
+                  tipo:
+                    - numerica
+                totalpo1:
+                  tipo:
+                    - numerica 
+            2.2.2 Finanzas Públicas:
+              variable:
+                flexibilidad_financiera:
+                  tipo:
+                    - numerica
+                    - mas_mejor 
+            2.2.3 Capacidad Económica:
+              variable:
+                capacidad_inversion:
+                  tipo:
+                    - numerica
+                    - mas_mejor    
+                complejidad_2014:
+                  tipo:
+                    - numerica
+                    - mas_mejor   
+        2.3 Capacidad de infraestructura:
+          subsubdimension:
+            2.3.1 Comunicación y energía:
+              variable:
+                n_usuarios:
+                  tipo:
+                    - numerica
+                    - mas_mejor
+                pct_viv_con_internet:
+                  tipo:
+                    - numerica
+                    - mas_mejor
+            2.3.2 Sistema de Gestión Municipal:
+              variable:
+                cobertura_dren:
+                  tipo:
+                    - numerica
+                    - mas_mejor
+                basura_porcent_cab:
+                  tipo:
+                    - numerica
+                    - mas_mejor
+            2.3.3 Capacidad Instalada del Sistema de Salud:
+              variable:
+                densidad_medicos:
+                  tipo:
+                    - numerica 
+                    - mas_mejor      
+                densidad_hospitales:
+                  tipo:
+                    - numerica
+                    - mas_mejor
+                densidad_camas:
+                  tipo:
+                    - numerica
+                    - mas_mejor
+                mortalidad_materna:
+                  tipo:
+                    - numerica
+                mortalidad_infantil:
+                  tipo:
+                    - numerica
+    3. Vulnerabilidad:
       Subdimensión:
-        Vulnerabilidad Socioeconomica:
-          variable:
-            ic_rezedu_porcentaje:
-              tipo:
-                - numerica
-            ic_asalud_porcentaje:
-              tipo:
-                - numerica
-            ic_segsoc_porcentaje:
-              tipo:
-                - numerica
-            ic_cv_porcentaje:
-              tipo:
-                - numerica
-            vul_ing_porcentaje:
-              tipo:
-                - numerica
-            ic_sbv_porcentaje:
-              tipo:
-                - numerica
-            pobreza_porcentaje        :
-              tipo:
-                - numerica
-        Grupos sociales:
-          variable:
-            brecha_tasa_ocupados:
-              tipo:
-                - numerica
-            brecha_horas_cuidados:
-              tipo:
-                - numerica
-            p_mayores65:
-              tipo:
-                - numerica
-            p_menores5:
-              tipo:
-                - numerica
-            p_adultos:
-              tipo:
-                - numerica
-            p_menores:
-              tipo:
-                - numerica
-            p_indigenas:
-              tipo:
-                - numerica
-            p_afrodescendientes:
-              tipo:
-                - numerica
-            p_mujeres:
-              tipo:
-                - numerica
-            p_hombres:
-              tipo:
-                - numerica
-            proporcion_jefatura:
-              tipo:
-                - numerica
-            proporcion_unipersonales:
-              tipo:
-                - numerica
-                
+        3.1 Vulnerabilidad Socioeconomica:
+          subsubdimensión:
+            #3.1.1 Carencia por acceso a alimentación:
+            #  variable:
+            #    **:
+            #      tipo:
+            #        - numerica
+            3.1.2 Rezago Educativo:
+              variable:
+                ic_rezedu_porcentaje:
+                  tipo:
+                    - numerica
+            3.1.3 Carencia por acceso a servicios de salud:
+                ic_asalud_porcentaje:
+                  tipo:
+                    - numerica
+            3.1.4 Carencia por acceso a seguridad social:
+              variable:
+                ic_segsoc_porcentaje:
+                  tipo:
+                    - numerica
+            3.1.5 Carencia por calidad y espacios de vivienda:
+              variable:
+                ic_cv_porcentaje:
+                  tipo:
+                    - numerica
+            3.1.6 Carencia por acceso a servicios básicos de vivienda:
+              variable:
+                ic_sbv_porcentaje:
+                  tipo:
+                    - numerica
+            3.1.7 Ingreso:
+              variable:
+                vul_ing_porcentaje:
+                  tipo:
+                    - numerica
+        3.1 Grupos Sociales en Condición de Vulnerabilidad:
+          subsubdimensión:
+            3.2.1 Grupos etarios:
+              variable:
+                p_mayores65:
+                  tipo:
+                    - numerica
+                p_menores5:
+                  tipo:
+                    - numerica
+                p_adultos:
+                  tipo:
+                    - numerica
+                p_menores:
+                  tipo:
+                    - numerica
+            3.2.2 Población indígena:
+              variable:
+                p_indigenas:
+                  tipo:
+                    - numerica
+                p_afrodescendientes:
+                  tipo:
+                    - numerica
+            3.2.3 Tipología de Hogares:
+              variable:
+                proporcion_jefatura:
+                  tipo:
+                    - numerica
+                proporcion_unipersonales:
+                  tipo:
+                    - numerica
+            3.2.4 Desigualdad:
+              variable:
+                brecha_horas_cuidados:
+                  tipo:
+                    - numerica
+                p_mujeres:
+                  tipo:
+                    - numerica
+                p_hombres:
+                  tipo:
+                    - numerica
+                brecha_tasa_ocupados:
+                  tipo:
+                    - numerica
+            #3.2.5 Personas con Discapacidad:
