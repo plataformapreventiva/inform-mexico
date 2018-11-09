@@ -30,5 +30,4 @@ get_cuts<-function(data, varx){
   data[,varx] <<- cut(x=yy, include.lowest = T, breaks=cutoffs, labels=c(0,25,50,75,100))
   #data[,paste(varx,"_kmeans", sep="")] <<- cut(x=yy, include.lowest = T, breaks=cutoffs, labels=c(0,25,50,75,100))
   data[[eval(varx)]] <- as.numeric(as.character(data[[eval(varx)]]))
-  return(print(varx))
 }

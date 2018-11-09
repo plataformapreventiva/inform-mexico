@@ -3,7 +3,7 @@ Inform:
     1. Amenazas y Exposición:
       Subdimensión:
         1.1 Fenómenos Naturales:
-          subsubdimensión:
+          Subsubdimensión:
             1.1.1 Fenómeno Hidrometeorológico:
               variable:
                 gp_inundac:
@@ -30,7 +30,7 @@ Inform:
                   tipo:
                     - categorica_5
         1.2 Fenómenos Antropogénicos:
-          subsubdimensión:
+          Subsubdimensión:
             1.2.1 Violencia y Delincuencia:
               variable:
                 homicidio_culposo_tasa:
@@ -68,7 +68,7 @@ Inform:
     2. Falta de Capacidades de Respuesta:
       Subdimensión:
         2.1 Capacidad Institucional:
-          subsubdimensión:
+          Subsubdimensión:
             2.1.1 Gestión de Riesgo de Desastre:
               variable:
                 nd_spnn1:
@@ -93,7 +93,7 @@ Inform:
                   tipo:
                     - numerica
         2.2 Capacidad financiera:
-          subsubdimensión:
+          Subsubdimensión:
             2.2.1 Cobertura Institucional:
               variable:
                 aut_cobr:
@@ -119,7 +119,7 @@ Inform:
                     - numerica
                     - mas_mejor   
         2.3 Capacidad de infraestructura:
-          subsubdimension:
+          Subsubdimensión:
             2.3.1 Comunicación y energía:
               variable:
                 n_usuarios:
@@ -163,18 +163,14 @@ Inform:
     3. Vulnerabilidad:
       Subdimensión:
         3.1 Vulnerabilidad Socioeconomica:
-          subsubdimensión:
-            #3.1.1 Carencia por acceso a alimentación:
-            #  variable:
-            #    **:
-            #      tipo:
-            #        - numerica
+          Subsubdimensión:
             3.1.2 Rezago Educativo:
               variable:
                 ic_rezedu_porcentaje:
                   tipo:
                     - numerica
             3.1.3 Carencia por acceso a servicios de salud:
+              variable:
                 ic_asalud_porcentaje:
                   tipo:
                     - numerica
@@ -199,7 +195,7 @@ Inform:
                   tipo:
                     - numerica
         3.1 Grupos Sociales en Condición de Vulnerabilidad:
-          subsubdimensión:
+          Subsubdimensión:
             3.2.1 Grupos etarios:
               variable:
                 p_mayores65:

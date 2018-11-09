@@ -10,7 +10,7 @@ estructura <- read_yaml("../data/estructura_indice.yaml")
 ```
 
 # Categorización 
-```{r,echo=FALSE, warning=FALSE,results='hide',message=FALSE}
+```{r,warning=FALSE,message=FALSE}
 ###############
 # Categóricas -> Numéricas
 # Clasifica las categóricas por tipo
@@ -37,7 +37,7 @@ data <- data %>%
 #nd_nsnn4 {""0-NA""|""1-si""|""2-no""|""8-info no disponible""|""9-no se sabe"
 ```
 
-```{r}
+```{r,echo=FALSE, warning=FALSE,results='hide',message=FALSE, include=FALSE}
 ###############
 # Numéricas
 # Define las variables numéricas (Obtener de yaml)
@@ -67,18 +67,23 @@ lapply(numericas, get_cuts, data=data)
 
 
 # Agregado de Dimensión
+TODO - función
 ```{r}
 dimensiones <- names(estructura$Inform$Dimensión)
 for (dimension in dimensiones) {
   subdimensiones <- estructura$Inform$Dimensión[[eval(dimension)]] %>% flatten() %>% names()
   for (subdimension in subdimensiones) {
-    variables <- estructura$Inform$Dimensión[[eval(dimension)]]$Subdimensión[[eval(subdimension)]] %>% 
-      flatten() %>% names()
-    data[variables] <- sapply(data[variables], as.character)
-    data[variables]<- sapply(data[variables], as.numeric)
-    data[subdimension] <- data[variables] %>% as.data.frame() %>% rowMeans(na.rm = TRUE)
+    Subsubdimensiones <- estructura$Inform$Dimensión[[eval(dimension)]]$Subdimensión[[eval(subdimension)]] %>% flatten() %>% names()
+    for (Subsubdimensión in Subsubdimensiones) {
+      variables <- estructura$Inform$Dimensión[[eval(dimension)]]$Subdimensión[[eval(subdimension)]]$Subsubdimensión[[eval(Subsubdimensión)]] %>% 
+        flatten() %>% names()
+      data[variables] <- sapply(data[variables], as.character)
+      data[variables]<- sapply(data[variables], as.numeric)
+      data[Subsubdimensión] <- data[variables] %>% as.data.frame() %>% rowMeans(na.rm = TRUE)
   }
-  data[dimension] <- data[variables] %>% as.data.frame() %>% rowMeans(na.rm = TRUE)
+  data[subdimension] <- data[Subsubdimensiones] %>% as.data.frame() %>% rowMeans(na.rm = TRUE)
+}
+data[dimension] <- data[subdimensiones] %>% as.data.frame() %>% rowMeans(na.rm = TRUE)
 }
 
 library(psych)
@@ -91,7 +96,7 @@ data["INFORM"] <-apply(data[dimensiones], 1,geometric.mean,na.rm=TRUE)
 library(ggthemes)
 options(scipen=999)
 tmp <- data %>% 
-  dplyr::select(INFORM, `Falta de Capacidades de Respuesta`,`Amenazas y Exposición`,Vulnerabilidades) %>% 
+  dplyr::select(INFORM, dimensiones) %>% 
   gather() 
 #tmp$key <- factor(tmp$key, levels = c("Vivienda","Entorno","Comunidad","ECUVE.2.0" ))
 tmp %>% ggplot(aes(value)) + theme_fivethirtyeight(base_size = 20) +
@@ -104,7 +109,7 @@ tmp %>% ggplot(aes(value)) + theme_fivethirtyeight(base_size = 20) +
 
 ```{r}
 res <- data %>% 
-  dplyr::select(INFORM, `Falta de Capacidades de Respuesta`,`Amenazas y Exposición`,Vulnerabilidades)
+  dplyr::select(INFORM, dimensiones)
 
 corrplot(cor(res), type = "upper", order = "hclust", 
          tl.col = "black", tl.srt = 45)
@@ -112,7 +117,7 @@ corrplot(cor(res), type = "upper", order = "hclust",
 
 ```{r}
 res <- data %>% 
-  dplyr::select(cve_muni, INFORM, `Falta de Capacidades de Respuesta`,`Amenazas y Exposición`,Vulnerabilidades)
+  dplyr::select(cve_muni, INFORM, dimensiones)
 
 df_mxmunicipio <- df_mxmunicipio %>% left_join(res, by = c("region"="cve_muni"))
 df_mxmunicipio$value <-  df_mxmunicipio$INFORM
@@ -127,13 +132,13 @@ mxmunicipio_choropleth(df_mxmunicipio,
 declaratoria <-dbrsocial::load_table(con,raw,declaratoria) %>% dbrsocial::retrieve_result()
 declaratoria_muni <-  declaratoria %>%
   mutate(anio = as.integer(str_extract(fecha_inicio, "^[0-9]{4}"))) %>%
-  filter(anio>=2010) %>%
+  filter(anio>=2016) %>%
   dplyr::mutate(cve_muni = str_pad(clave_completa, 5, pad = "0")) %>%
   group_by(cve_muni) %>% summarise(declaratorias_n = n()) %>%
-  mutate(declaratorias_n = log(declaratorias_n))
+  mutate(declaratorias_n = declaratorias_n)
 
 res <- data %>% 
-  dplyr::select(cve_muni, INFORM, `Falta de Capacidades de Respuesta`,`Amenazas y Exposición`,Vulnerabilidades)
+  dplyr::select(cve_muni, INFORM, dimensiones)
 temp <- res %>% left_join(declaratoria_muni, by="cve_muni") %>% select(INFORM, declaratorias_n)
 
 cor(temp %>% drop_na())
