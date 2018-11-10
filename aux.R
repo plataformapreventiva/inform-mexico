@@ -5,17 +5,19 @@ rm(list = ls(all = TRUE))
 ########################################
 
 instalar <- function(paquete) {
-  
   if (!require(paquete,character.only = TRUE, quietly = TRUE, warn.conflicts = FALSE)) {
     install.packages(as.character(paquete), repos = "http://cran.us.r-project.org")
     library(paquete, character.only = TRUE, quietly = TRUE, warn.conflicts = FALSE)
   }
 }
+
 paquetes <- c("tidyverse", "yaml", "rlist", "car", "classInt",
               "mxmaps", "dbrsocial", "magrittr", "dotenv",
-              "tidyverse", "stringr", "corrplot", "mxmaps")
+              "tidyverse", "stringr", "corrplot", "mxmaps",
+              "ggthemes", "psych")
+
 lapply(paquetes, instalar);
-#library("df_mxmunicipio")
+
 dotenv::load_dot_env("../.env")
 con <- prev_connect()
 
@@ -31,3 +33,40 @@ get_cuts<-function(data, varx){
   #data[,paste(varx,"_kmeans", sep="")] <<- cut(x=yy, include.lowest = T, breaks=cutoffs, labels=c(0,25,50,75,100))
   data[[eval(varx)]] <- as.numeric(as.character(data[[eval(varx)]]))
 }
+
+get_var_from_type <- function(estructura, pattern){
+  # Obtener variable del yaml con regex
+  variables <- names(list.search(estructura, .[grepl(pattern, .)], 'character'))
+  variables <- sapply(lapply(variables, 
+                             str_match, 
+                             pattern = "variable.(.*).tipo"),
+                      function(x) x[2])
+  return(variables)
+}
+
+get_var_from_name <- function(pattern){
+  # Obtener variable del yaml con regex
+  variables <- flatten(estructura) %>% unlist() %>% names() %>% list()
+  variables <- list.search(variables, .[grepl(pattern,.)])
+  variables <- lapply(variables, 
+                      str_match, 
+                      pattern = "variable.(.*).tipo")[[1]][,2]
+  return(unique(variables))
+}
+
+
+to_numeric <- function(data, variables){
+  data[variables] <- sapply(data[variables], as.character)
+  data[variables]<- sapply(data[variables], as.numeric)
+  return(data)
+}
+
+plot_map <- function(data, variable, palette){
+  data["value"] <-  data[variable]
+  mxmunicipio_choropleth(data, 
+                         num_colors = 8,
+                         title = variable,
+                         legend = variable) +
+    scale_fill_brewer(palette = palette, na.value=NA,  name = variable) 
+}  
+

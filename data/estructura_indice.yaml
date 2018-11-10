@@ -8,7 +8,7 @@ Inform:
               variable:
                 gp_inundac:
                   tipo:
-                    - categorica_5
+                    categorica_5:
                 gp_sequia2:
                   tipo:
                     - categorica_5
