@@ -9,55 +9,51 @@ data <- read_delim("../data/inform_mun.csv", delim = "|")
 estructura <- read_yaml("../data/estructura_indice.yaml")
 ```
 
-# Categorización 
-```{r,echo=FALSE, warning=FALSE,results='hide',message=FALSE}
+
+# Limpieza Categóricas 
+
+```{r,warning=FALSE,message=FALSE}
 ###############
 # Categóricas -> Numéricas
 # Clasifica las categóricas por tipo
 # Como ya están categorizadas las volvemos numéricas
 
-categoricas_5<-names(list.search(estructura, grepl('^categorica_5$', .), 
-                                 'character'))
-categoricas_5 <- sapply(lapply(categoricas_5, 
-                               str_match, 
-                               pattern = "variable.(.*).tipo"),
-                        function(x) x[2])
+categoricas_5 <- get_var_from_type(estructura,"categorica_5")
 data[,categoricas_5]  <- data[,categoricas_5] %>% 
-  mutate_all(funs(recode(var = ., recodes = "'Muy bajo'=0;'Muy bajo'=0;'Bajo'=25;'Medio'=50;'Alto'=75;'Muy alto'=100")))
+  mutate_all(funs(recode(var = ., 
+                         recodes = "'Muy bajo'=0;
+                         'Muy bajo'=0;'Bajo'=25;
+                         'Medio'=50;'Alto'=75;
+                         'Muy alto'=100")))
 
 data <- data %>% 
   mutate(nd_spnn1 = ifelse(nd_spnn1==1, 100, 0),
          nd_nsnn4 = ifelse(nd_nsnn4==1,100,0),
          mec_tran = ifelse(mec_tran!=0,100,0),
          gp_tsunami = ifelse(gp_tsunami=="Muy alto", 100, 0))
+
 #TODO
 #Existencia de unidad de protección civil 
-#nd_spnn1: ""0-NA""|""1-si""|""2-no""|""3-en proceso de integracion""|""8-info no disponible""|""9-no se sabe"
+#nd_spnn1: ""0-NA""|""1-si""|""2-no""|""3-en 
+# proceso de integracion""|""8-info no 
+#disponible""|""9-no se sabe"
 #Existencia de Atlas de Riesgo
-#nd_nsnn4 {""0-NA""|""1-si""|""2-no""|""8-info no disponible""|""9-no se sabe"
+#nd_nsnn4 {""0-NA""|""1-si""|""2-no""|"
+#"8-info no disponible""|""9-no se sabe"
 ```
 
-```{r}
+# Limpieza Numéricas
+
+```{r,echo=FALSE, warning=FALSE,results='hide',message=FALSE, include=FALSE}
 ###############
 # Numéricas
 # Define las variables numéricas (Obtener de yaml)
-numericas<-names(list.search(estructura, 
-                             grepl('^numerica$', .), 
-                             'character'))
-numericas <- sapply(lapply(numericas, 
-                           str_match, 
-                           pattern = "variable.(.*).tipo"),function(x) x[2]) 
-numericas <- numericas[!is.na(numericas)]
+numericas <- get_var_from_type(estructura,"^numerica$")
 data[,numericas] <- lapply(data[, numericas], as.numeric) 
 
 # Queremos que inform siempre sea más es peor
 # Acá define las variables donde más sea mejor
-mas_mejor<-names(list.search(estructura, 
-                             grepl('^mas_mejor$', .), 
-                             'character'))
-mas_mejor <- sapply(lapply(mas_mejor, 
-                           str_match, 
-                           pattern = "variable.(.*).tipo"),function(x) x[2]) 
+mas_mejor <- get_var_from_type(estructura,"^mas_mejor$")
 data[,mas_mejor] <- data[,mas_mejor]*-1  
 
 # Crear cortes
@@ -66,75 +62,108 @@ lapply(numericas, get_cuts, data=data)
 ```
 
 
-# Agregado de Dimensión
-```{r}
-dimensiones <- names(estructura$Inform$Dimensión)
-for (dimension in dimensiones) {
-  subdimensiones <- estructura$Inform$Dimensión[[eval(dimension)]] %>% flatten() %>% names()
-  for (subdimension in subdimensiones) {
-    variables <- estructura$Inform$Dimensión[[eval(dimension)]]$Subdimensión[[eval(subdimension)]] %>% 
-      flatten() %>% names()
-    data[variables] <- sapply(data[variables], as.character)
-    data[variables]<- sapply(data[variables], as.numeric)
-    data[subdimension] <- data[variables] %>% as.data.frame() %>% rowMeans(na.rm = TRUE)
-  }
-  data[dimension] <- data[variables] %>% as.data.frame() %>% rowMeans(na.rm = TRUE)
-}
+# Análisis de Correlación
 
-library(psych)
-data["INFORM"] <- data[dimensiones] %>% as.data.frame() %>% rowMeans(na.rm = TRUE)
+```{r}
+amenazas <- get_var_from_name("Amenazas")
+vulnerabilidad <- get_var_from_name("Vulnerabilidad")
+capacidades <- get_var_from_name("Capacidades")
+data <- to_numeric(data, amenazas) 
+data <- to_numeric(data, vulnerabilidad)
+data <- to_numeric(data, capacidades) 
+
+res <- data %>% select(amenazas) %>% drop_na()
+corrplot(cor(res), type = "upper",  
+         tl.col = "black", tl.srt = 45)
+res <- data %>% select(capacidades) %>% drop_na()
+corrplot(cor(res), type = "upper",  
+         tl.col = "black", tl.srt = 45)
+res <- data %>% select(vulnerabilidad) %>% drop_na()
+corrplot(cor(res), type = "upper", 
+         tl.col = "black", tl.srt = 45)
+
+
+```
+
+
+# Agregado de Dimensión
+TODO - función
+```{r}
+# TODO() - recursive function
+# Try other aggregate functions
+dimensiones <- names(estructura$Inform$Dimensión)
+
+for (dimension in dimensiones) {
+  subdimensiones <- estructura$Inform$Dimensión[[eval(dimension)]] %>% 
+    flatten() %>% names()
+  for (subdimension in subdimensiones) {
+    Subsubdimensiones <- estructura$Inform$Dimensión[[
+      eval(dimension)]]$Subdimensión[[eval(subdimension)]] %>% 
+      flatten() %>% names()
+    for (Subsubdimensión in Subsubdimensiones) {
+      variables <- get_var_from_name(Subsubdimensión)
+      data[Subsubdimensión] <- data[variables] %>% as.data.frame() %>% 
+        rowMeans(na.rm = TRUE)
+  }
+  data[subdimension] <- data[Subsubdimensiones] %>% as.data.frame() %>% 
+    rowMeans(na.rm = TRUE)
+}
+data[dimension] <- data[subdimensiones] %>% as.data.frame() %>% 
+  rowMeans(na.rm = TRUE)
+}
 
 data["INFORM"] <-apply(data[dimensiones], 1,geometric.mean,na.rm=TRUE)
 ```
 
+
 ```{r}
-library(ggthemes)
 options(scipen=999)
 tmp <- data %>% 
-  dplyr::select(INFORM, `Falta de Capacidades de Respuesta`,`Amenazas y Exposición`,Vulnerabilidades) %>% 
+  dplyr::select(INFORM, dimensiones) %>% 
   gather() 
-#tmp$key <- factor(tmp$key, levels = c("Vivienda","Entorno","Comunidad","ECUVE.2.0" ))
-tmp %>% ggplot(aes(value)) + theme_fivethirtyeight(base_size = 20) +
+tmp %>% ggplot(aes(value)) + 
+  theme_fivethirtyeight(base_size = 20) +
   facet_wrap( ~ key) +
   geom_histogram(bins = 25) + 
-  theme(axis.title = element_text()) + ylab('Observaciones') + xlab("Calificación")  
-  
+  theme(axis.title = element_text()) + 
+  ylab('Observaciones') + 
+  xlab("Calificación")  
 
 ```
 
 ```{r}
 res <- data %>% 
-  dplyr::select(INFORM, `Falta de Capacidades de Respuesta`,`Amenazas y Exposición`,Vulnerabilidades)
-
+  dplyr::select(INFORM, dimensiones)
 corrplot(cor(res), type = "upper", order = "hclust", 
          tl.col = "black", tl.srt = 45)
 ```
 
 ```{r}
-res <- data %>% 
-  dplyr::select(cve_muni, INFORM, `Falta de Capacidades de Respuesta`,`Amenazas y Exposición`,Vulnerabilidades)
+data("df_mxmunicipio")
+df_mxmunicipio <- df_mxmunicipio %>% left_join(data, by = c("region"="cve_muni"))
 
-df_mxmunicipio <- df_mxmunicipio %>% left_join(res, by = c("region"="cve_muni"))
-df_mxmunicipio$value <-  df_mxmunicipio$INFORM
-mxmunicipio_choropleth(df_mxmunicipio, 
-                       num_colors = 7,
-                       title = "INFORM",
-                       legend = "Nivel de Riesgo")
-
+plot_map(df_mxmunicipio, "INFORM", "Reds")
+plot_map(df_mxmunicipio, "1. Amenazas y Exposición", "Oranges")
+plot_map(df_mxmunicipio, "2. Falta de Capacidades de Respuesta", "Greens")
+plot_map(df_mxmunicipio, "3. Vulnerabilidad", "PuBu")
 ```
 
 ```{r}
-declaratoria <-dbrsocial::load_table(con,raw,declaratoria) %>% dbrsocial::retrieve_result()
+declaratoria <-dbrsocial::load_table(con,raw,declaratoria) %>% 
+  dbrsocial::retrieve_result()
+
 declaratoria_muni <-  declaratoria %>%
   mutate(anio = as.integer(str_extract(fecha_inicio, "^[0-9]{4}"))) %>%
-  filter(anio>=2010) %>%
+  filter(anio>=2016) %>%
   dplyr::mutate(cve_muni = str_pad(clave_completa, 5, pad = "0")) %>%
   group_by(cve_muni) %>% summarise(declaratorias_n = n()) %>%
-  mutate(declaratorias_n = log(declaratorias_n))
+  mutate(declaratorias_n = declaratorias_n)
 
 res <- data %>% 
-  dplyr::select(cve_muni, INFORM, `Falta de Capacidades de Respuesta`,`Amenazas y Exposición`,Vulnerabilidades)
-temp <- res %>% left_join(declaratoria_muni, by="cve_muni") %>% select(INFORM, declaratorias_n)
+  dplyr::select(cve_muni, INFORM, dimensiones)
+temp <- res %>% 
+  left_join(declaratoria_muni, by="cve_muni") %>% 
+  select(INFORM, declaratorias_n)
 
 cor(temp %>% drop_na())
 ```
