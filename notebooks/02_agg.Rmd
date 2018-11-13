@@ -38,8 +38,9 @@ data <- data %>%
 # proceso de integracion""|""8-info no 
 #disponible""|""9-no se sabe"
 #Existencia de Atlas de Riesgo
-#nd_nsnn4 {""0-NA""|""1-si""|""2-no""|"
+#nd_nsnn4 y nd_nsnn1 {""0-NA""|""1-si""|""2-no""|"
 #"8-info no disponible""|""9-no se sabe"
+# aut_cobr {"0-NA"|"1-gobierno municipal"|"2-gobierno de la Entidad Federativa"|"3-No se cobra"|"9-No se sabe"|}'
 ```
 
 # Limpieza Numéricas
