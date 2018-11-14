@@ -22,6 +22,26 @@ categoricas_5 <- get_var_from_type(estructura,"categorica_5")
 data[,categoricas_5]  <- data[,categoricas_5] %>% 
   mutate_all(funs(recode(var = ., 
                          recodes = "'Muy bajo'=0;
+                         'Bajo'=25;
+                         'Medio'=50;'Alto'=75;
+                         'Muy alto'=100")))
+
+categoricas_nd_spnn1 <- get_var_from_type(estructura,"categorica_5")
+data[,categoricas_5]  <- data[,categoricas_5] %>% 
+  mutate_all(funs(recode(var = ., 
+                         recodes = "0=0;
+                         1=0;2=75;
+                         =25;8=50;
+                         9=100")))
+
+# 0-NA""|""1-si""|""2-no""|""3-en 
+# proceso de integracion""|""8-info no 
+#disponible""|""9-no se sabe"
+
+categoricas_5 <- get_var_from_type(estructura,"categorica_5")
+data[,categoricas_5]  <- data[,categoricas_5] %>% 
+  mutate_all(funs(recode(var = ., 
+                         recodes = "'Muy bajo'=0;
                          'Muy bajo'=0;'Bajo'=25;
                          'Medio'=50;'Alto'=75;
                          'Muy alto'=100")))
@@ -66,9 +86,9 @@ lapply(numericas, get_cuts, data=data)
 # Análisis de Correlación
 
 ```{r}
-amenazas <- get_var_from_name("Amenazas")
-vulnerabilidad <- get_var_from_name("Vulnerabilidad")
-capacidades <- get_var_from_name("Capacidades")
+amenazas <- get_var_from_name(estructura, "Amenazas")
+vulnerabilidad <- get_var_from_name(estructura, "Vulnerabilidad")
+capacidades <- get_var_from_name(estructura, "Capacidades")
 data <- to_numeric(data, amenazas) 
 data <- to_numeric(data, vulnerabilidad)
 data <- to_numeric(data, capacidades) 
@@ -96,13 +116,13 @@ dimensiones <- names(estructura$Inform$Dimensión)
 
 for (dimension in dimensiones) {
   subdimensiones <- estructura$Inform$Dimensión[[eval(dimension)]] %>% 
-    flatten() %>% names()
+    purrr::flatten() %>% names()
   for (subdimension in subdimensiones) {
     Subsubdimensiones <- estructura$Inform$Dimensión[[
       eval(dimension)]]$Subdimensión[[eval(subdimension)]] %>% 
-      flatten() %>% names()
+     purrr::flatten() %>% names()
     for (Subsubdimensión in Subsubdimensiones) {
-      variables <- get_var_from_name(Subsubdimensión)
+      variables <- get_var_from_name(estructura,Subsubdimensión)
       data[Subsubdimensión] <- data[variables] %>% as.data.frame() %>% 
         rowMeans(na.rm = TRUE)
   }
@@ -149,13 +169,15 @@ plot_map(df_mxmunicipio, "2. Falta de Capacidades de Respuesta", "Greens")
 plot_map(df_mxmunicipio, "3. Vulnerabilidad", "PuBu")
 ```
 
+
+
 ```{r}
 declaratoria <-dbrsocial::load_table(con,raw,declaratoria) %>% 
   dbrsocial::retrieve_result()
 
 declaratoria_muni <-  declaratoria %>%
   mutate(anio = as.integer(str_extract(fecha_inicio, "^[0-9]{4}"))) %>%
-  filter(anio>=2016) %>%
+  filter(anio==2016) %>%
   dplyr::mutate(cve_muni = str_pad(clave_completa, 5, pad = "0")) %>%
   group_by(cve_muni) %>% summarise(declaratorias_n = n()) %>%
   mutate(declaratorias_n = declaratorias_n)
@@ -164,8 +186,15 @@ res <- data %>%
   dplyr::select(cve_muni, INFORM, dimensiones)
 temp <- res %>% 
   left_join(declaratoria_muni, by="cve_muni") %>% 
-  select(INFORM, declaratorias_n)
+  select(INFORM, dimensiones, declaratorias_n)
 
 cor(temp %>% drop_na())
+
+```
+
+```{r}
+ggplot(data = temp) + 
+  geom_point(mapping = aes(x = declaratorias_n, y = INFORM)) +
+  geom_smooth(mapping = aes(x = declaratorias_n, y = INFORM), method=lm) 
 ```
 

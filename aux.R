@@ -13,10 +13,12 @@ instalar <- function(paquete) {
 
 paquetes <- c("tidyverse", "yaml", "rlist", "car", "classInt",
               "mxmaps", "dbrsocial", "magrittr", "dotenv",
-              "tidyverse", "stringr", "corrplot", "mxmaps",
-              "ggthemes", "psych")
+              "tidyverse", "stringr", "corrplot",
+              "ggthemes", "psych", "devtools")
 
 lapply(paquetes, instalar);
+
+devtools::install_github("diegovalle/mxmaps")
 
 dotenv::load_dot_env("../.env")
 con <- prev_connect()
@@ -44,16 +46,15 @@ get_var_from_type <- function(estructura, pattern){
   return(variables)
 }
 
-get_var_from_name <- function(pattern){
+get_var_from_name <- function(estructura, pattern){
   # Obtener variable del yaml con regex
-  variables <- flatten(estructura) %>% unlist() %>% names() %>% list()
+  variables <- purrr::flatten(estructura) %>% unlist() %>% names() %>% list()
   variables <- list.search(variables, .[grepl(pattern,.)])
   variables <- lapply(variables, 
                       str_match, 
                       pattern = "variable.(.*).tipo")[[1]][,2]
   return(unique(variables))
 }
-
 
 to_numeric <- function(data, variables){
   data[variables] <- sapply(data[variables], as.character)
