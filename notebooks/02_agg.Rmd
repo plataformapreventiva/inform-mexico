@@ -26,41 +26,40 @@ data[,categoricas_5]  <- data[,categoricas_5] %>%
                          'Medio'=50;'Alto'=75;
                          'Muy alto'=100")))
 
-categoricas_nd_spnn1 <- get_var_from_type(estructura,"categorica_5")
-data[,categoricas_5]  <- data[,categoricas_5] %>% 
+#Existencia de unidad de protección civil
+#{0-NA|1-si|2-no|3-en proceso de integracion|8-info no disponible|9-no se sabe}
+categoricas_nd_spnn1 <- get_var_from_type(estructura,"categoricas_nd_spnn1")
+data[,categoricas_nd_spnn1]  <- data[,categoricas_nd_spnn1] %>% 
   mutate_all(funs(recode(var = ., 
                          recodes = "0=0;
-                         1=0;2=75;
-                         =25;8=50;
-                         9=100")))
+                         1=0;2=100;
+                         3=25;8=50;
+                         9=50")))
 
-# 0-NA""|""1-si""|""2-no""|""3-en 
-# proceso de integracion""|""8-info no 
-#disponible""|""9-no se sabe"
-
-categoricas_5 <- get_var_from_type(estructura,"categorica_5")
-data[,categoricas_5]  <- data[,categoricas_5] %>% 
-  mutate_all(funs(recode(var = ., 
-                         recodes = "'Muy bajo'=0;
-                         'Muy bajo'=0;'Bajo'=25;
-                         'Medio'=50;'Alto'=75;
-                         'Muy alto'=100")))
-
-data <- data %>% 
-  mutate(nd_spnn1 = ifelse(nd_spnn1==1, 100, 0),
-         nd_nsnn4 = ifelse(nd_nsnn4==1,100,0),
-         mec_tran = ifelse(mec_tran!=0,100,0),
-         gp_tsunami = ifelse(gp_tsunami=="Muy alto", 100, 0))
-
-#TODO
-#Existencia de unidad de protección civil 
-#nd_spnn1: ""0-NA""|""1-si""|""2-no""|""3-en 
-# proceso de integracion""|""8-info no 
-#disponible""|""9-no se sabe"
 #Existencia de Atlas de Riesgo
-#nd_nsnn4 y nd_nsnn1 {""0-NA""|""1-si""|""2-no""|"
-#"8-info no disponible""|""9-no se sabe"
-# aut_cobr {"0-NA"|"1-gobierno municipal"|"2-gobierno de la Entidad Federativa"|"3-No se cobra"|"9-No se sabe"|}'
+#Participacion ciudadana
+#{0-NA|1-si|2-no|8-info no disponible|9-no se sabe}
+categoricas_nd_nsnn1y4 <- get_var_from_type(estructura,"categoricas_nd_nsnn1y4")
+data[,categoricas_nd_nsnn1y4]  <- data[,categoricas_nd_nsnn1y4] %>% 
+  mutate_all(funs(recode(var = ., 
+                         recodes = "0=0;
+                         1=0;2=100;
+                         8=50;9=50")))
+
+# Cobro predial
+# {0-NA|1-gobierno municipal|2-gobierno de la Entidad Federativa|3-No se cobra|9-No se sabe}
+categoricas_aut_cobr <- get_var_from_type(estructura,"categoricas_aut_cobr")
+data[,categoricas_aut_cobr]  <- data[,categoricas_aut_cobr] %>% 
+  mutate_all(funs(recode(var = ., 
+                         recodes = "0=0;
+                         1=0;2=25;
+                         8=100;9=50")))
+
+#Info publica disponible
+
+#Mecanismos de transparencia
+data <- data %>% 
+  mutate(mec_tran = ifelse(mec_tran!=0,100,0))
 ```
 
 # Limpieza Numéricas

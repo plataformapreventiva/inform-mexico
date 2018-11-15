@@ -76,7 +76,7 @@ Inform:
                     - categorica_nd_spnn1
                 nd_nsnn4:
                   tipo:
-                    - categorica_nd_nsnn4
+                    - categoricas_nd_nsnn1y4
             #2.1.2 Acceso a la Justicia:
             2.1.3 Reglamentación Básica:
               variable:
@@ -91,10 +91,10 @@ Inform:
                   #tipo:
                     #- numerica
             #2.1.4 Gobernabilidad:
-            #  variable:
-            #    nd_nsnn1:
-            #      tipo:
-            #        - categorica_nd_nsnn4
+              #variable:
+                #nd_nsnn1:
+                  #tipo:
+                    #- categoricas_nd_nsnn1y4
         2.2 Capacidad financiera:
           Subsubdimensión:
             2.2.1 Finanzas Públicas:
@@ -199,25 +199,28 @@ Inform:
           Subsubdimensión:
             3.2.1 Grupos etarios:
               variable:
-                p_mayores65:
+                prop_mayores65:
                   tipo:
                     - numerica
-                p_menores5:
+                prop_menores5:
                   tipo:
                     - numerica
-                p_adultos:
+                prop_adultos:
                   tipo:
                     - numerica
-                p_menores:
+                prop_menores:
                   tipo:
                     - numerica
                 # relacion dependencia
             3.2.2 Población indígena:
               variable:
-                p_indigenas:
+                prop_indigenas:
                   tipo:
                     - numerica
-                p_afrodescendientes:
+                prop_lengua_indigena:
+                  tipo:
+                    - numerica
+                prop_afrodescendientes:
                   tipo:
                     - numerica
             3.2.3 Tipología de Hogares:
@@ -234,10 +237,10 @@ Inform:
                   tipo:
                     - numerica
                     - mas_mejor
-                p_mujeres:
+                prop_mujeres:
                   tipo:
                     - numerica
-                p_hombres:
+                prop_hombres:
                   tipo:
                     - numerica
                 brecha_tasa_ocupados:
