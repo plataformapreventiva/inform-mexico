@@ -74,7 +74,7 @@ if(length(opt) > 1){
   startdate  <- c(21000, 23400, 26800)
   db <- data.frame(employee, salary, startdate)
   copy_to(con, db,
-          dbplyr::in_schema("models",opt$pipeline),
+          dbplyr::in_schema("models","informindex"),
           temporary = FALSE, overwrite = TRUE)
 
   dbDisconnect(con)
