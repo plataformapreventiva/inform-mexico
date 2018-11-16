@@ -73,10 +73,12 @@ if(length(opt) > 1){
   salary <- c(21000, 23400, 26800)
   startdate  <- c(21000, 23400, 26800)
   db <- data.frame(employee, salary, startdate)
+  table_id = DBI::Id(schema = 'models', table = 'test')
 
-  copy_to(con, db,
-          dbplyr::in_schema('models','test'),
-          temporary = FALSE, overwrite = TRUE)
+  dbWriteTable(con, table_id, db)
+  #copy_to(con, db,
+  #        name=DBI::Id(schema =" models", name = "test"),
+  #        temporary = FALSE, overwrite = TRUE)
 
   dbDisconnect(con)
 
