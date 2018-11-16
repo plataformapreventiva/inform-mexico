@@ -73,8 +73,9 @@ if(length(opt) > 1){
   salary <- c(21000, 23400, 26800)
   startdate  <- c(21000, 23400, 26800)
   db <- data.frame(employee, salary, startdate)
+
   copy_to(con, db,
-          dbplyr::in_schema("models","informindex"),
+          dbplyr::in_schema('models','test'),
           temporary = FALSE, overwrite = TRUE)
 
   dbDisconnect(con)
