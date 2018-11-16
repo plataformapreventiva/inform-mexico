@@ -1,5 +1,4 @@
 #!/usr/bin/env Rscript
-#!/usr/bin/env Rscript
 library(optparse)
 library(dbplyr)
 library(dplyr)
@@ -57,12 +56,6 @@ if(length(opt) > 1){
     POSTGRES_USER <- opt$user
     PGHOST <- opt$host
     PGPORT <- "5432"
-  }
-
-  if(opt$data_date == ""){
-  stop("Did not receive a valid data date, stopping", call.=FALSE)
-  }else{
-    data_date <- opt$data_date
   }
 
   con <- DBI::dbConnect(RPostgres::Postgres(),
