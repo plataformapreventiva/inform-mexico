@@ -9,6 +9,8 @@ library(yaml)
 option_list = list(
   make_option(c("--current_date"), type="character", default="",
               help="current date", metavar="character"),
+  make_option(c("--data_date"), type="character", default="",
+              help="data date", metavar="character"),
   make_option(c("--database"), type="character", default="",
               help="database name", metavar="character"),
   make_option(c("--user"), type="character", default="",
@@ -73,11 +75,13 @@ if(length(opt) > 1){
   salary <- c(21000, 23400, 26800)
   startdate  <- c(21000, 23400, 26800)
   db <- data.frame(employee, salary, startdate)
+
+  # Save model table
   table_id = DBI::Id(schema = 'models', table = 'test')
   copy_to(con, db,
-          name=in_schema("models","test"),
+          name=in_schema("models",opt$pipeline),
           temporary = FALSE, overwrite = TRUE)
   dbDisconnect(con)
 
-  print('Features written to: features.crimenes_tasas')
+  print(paste0('Features written to: features.',opt$pipeline))
 }
