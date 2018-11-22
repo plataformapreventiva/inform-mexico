@@ -70,18 +70,123 @@ if(length(opt) > 1){
 
 
   print('Pulling datasets')
-
-  employee <- c('John Doe','Peter Gynn','Jolie Hope')
-  salary <- c(21000, 23400, 26800)
-  startdate  <- c(21000, 23400, 26800)
-  db <- data.frame(employee, salary, startdate)
-
+  
+  data <- tbl(con, dbplyr::in_schema('features','inform_variables_municipios')) 
+  estructura <- read_yaml("data/estructura_indice.yaml") # preguntar de dónde leerlo
+  
+  #----------------------------------------------------------------------------------------
+  
+  # LIMPIEZA CATEGÓRICAS
+  
+  # Categóricas -> Numéricas
+  # Clasifica las categóricas por tipo
+  # Como ya están categorizadas las volvemos numéricas
+  
+  categoricas_5 <- get_var_from_type(estructura,"categorica_5")
+  data[,categoricas_5]  <- data[,categoricas_5] %>% 
+    mutate_all(funs(recode(var = ., 
+                           recodes = "'Muy bajo'=0;
+                           'Bajo'=25;
+                           'Medio'=50;'Alto'=75;
+                           'Muy alto'=100")))
+  
+  #Existencia de unidad de protección civil
+  #{0-NA|1-si|2-no|3-en proceso de integracion|8-info no disponible|9-no se sabe}
+  #categoricas_nd_spnn1 <- get_var_from_type(estructura,"categoricas_nd_spnn1")
+  #data[,categoricas_nd_spnn1]  <- data[,categoricas_nd_spnn1] %>% 
+  # mutate_all(funs(recode(var = ., 
+  #                       recodes = "0=0;
+  #                      1=0;2=100;
+  #                       3=25;8=50;
+  #                       9=50")))
+  
+  #Existencia de Atlas de Riesgo
+  #Participacion ciudadana
+  #{0-NA|1-si|2-no|8-info no disponible|9-no se sabe}
+  categoricas_nd_nsnn1y4 <- get_var_from_type(estructura,"categorica_nd_nsnn1y4")
+  data[,categoricas_nd_nsnn1y4]  <- data[,categoricas_nd_nsnn1y4] %>% 
+    mutate_all(funs(recode(var = ., 
+                           recodes = "0=0;
+                         1=0;2=100;
+                         8=50;9=50")))
+  
+  # Cobro predial
+  # {0-NA|1-gobierno municipal|2-gobierno de la Entidad Federativa|3-No se cobra|9-No se sabe}
+  categoricas_aut_cobr <- get_var_from_type(estructura,"categorica_aut_cobr")
+  data[,categoricas_aut_cobr]  <- data[,categoricas_aut_cobr] %>% 
+   mutate_all(funs(recode(var = ., 
+                         recodes = "0=0;
+                        1=0;2=25;
+                       8=100;9=50")))
+  
+  #Info publica disponible
+  
+  #Mecanismos de transparencia
+  #data <- data %>% 
+  #  mutate(mec_tran = ifelse(mec_tran!=0,100,0))
+  
+  #----------------------------------------------------------------------------------------
+  
+  # LIMPIEZA NUMÉRICAS
+  # Define las variables numéricas (Obtener de yaml)
+  numericas <- get_var_from_type(estructura,"^numerica$")
+  data[,numericas] <- lapply(data[, numericas], as.numeric) 
+  
+  # Queremos que inform siempre sea más es peor
+  # Acá define las variables donde más sea mejor
+  mas_mejor <- get_var_from_type(estructura,"^mas_mejor$")
+  data[,mas_mejor] <- data[,mas_mejor]*-1  
+  
+  # Crear cortes
+  # kmeans (por ahora)
+  lapply(numericas, get_cuts, data=data)
+  
+  amenazas <- get_var_from_name(estructura, "Amenazas")
+  vulnerabilidad <- get_var_from_name(estructura, "Vulnerabilidad")
+  capacidades <- get_var_from_name(estructura, "Capacidades")
+  data <- to_numeric(data, amenazas) 
+  data <- to_numeric(data, vulnerabilidad)
+  data <- to_numeric(data, capacidades) 
+  
+  #----------------------------------------------------------------------------------------
+  
+  # AGREGADO DE DIMENSIÓN
+  # TODO() - recursive function
+  # Try other aggregate functions
+  dimensiones <- names(estructura$Inform$Dimensión)
+  
+  for (dimension in dimensiones) {
+    subdimensiones <- estructura$Inform$Dimensión[[eval(dimension)]] %>% 
+      purrr::flatten() %>% names()
+    for (subdimension in subdimensiones) {
+      Subsubdimensiones <- estructura$Inform$Dimensión[[
+        eval(dimension)]]$Subdimensión[[eval(subdimension)]] %>% 
+        purrr::flatten() %>% names()
+      for (Subsubdimensión in Subsubdimensiones) {
+        variables <- get_var_from_name(estructura,Subsubdimensión)
+        data[Subsubdimensión] <- data[variables] %>% as.data.frame() %>% 
+          rowMeans(na.rm = TRUE)
+      }
+      data[subdimension] <- data[Subsubdimensiones] %>% as.data.frame() %>% 
+        rowMeans(na.rm = TRUE)
+    }
+    data[dimension] <- data[subdimensiones] %>% as.data.frame() %>% 
+      rowMeans(na.rm = TRUE)
+  }
+  
+  data["INFORM"] <-apply(data[dimensiones], 1,geometric.mean,na.rm=TRUE)
+  inform <- data %>% dplyr::select(cve_muni, INFORM, dimensiones)
+  inform <- arrange(inform, desc(INFORM)) %>%
+    mutate(ranking = 1:nrow(inform)) # poner número de ranking
+  
+  #----------------------------------------------------------------------------------------
+  
   # Save model table
-  table_id = DBI::Id(schema = 'models', table = 'test')
-  copy_to(con, db,
+  table_id = DBI::Id(schema = 'models', table = 'inform_index')
+  copy_to(con, inform,
           name=in_schema("models",opt$pipeline),
           temporary = FALSE, overwrite = TRUE)
   dbDisconnect(con)
 
-  print(paste0('Features written to: features.',opt$pipeline))
+  print(paste0('Features written to: models.',opt$pipeline))
 }

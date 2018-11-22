@@ -4,11 +4,11 @@ output: html_notebook
 ---
 
 ```{r,echo=FALSE, warning=FALSE,results='hide',message=FALSE}
+source("../utils.R")
 source("../aux.R")
-data <- read_delim("../data/inform_mun.csv", delim = "|")
+data <- tbl(con, dbplyr::in_schema('features','inform_variables_municipios')) %>% retrieve_result()
 estructura <- read_yaml("../data/estructura_indice.yaml")
 ```
-
 
 # Limpieza Categóricas 
 
@@ -28,13 +28,13 @@ data[,categoricas_5]  <- data[,categoricas_5] %>%
 
 #Existencia de unidad de protección civil
 #{0-NA|1-si|2-no|3-en proceso de integracion|8-info no disponible|9-no se sabe}
-categoricas_nd_spnn1 <- get_var_from_type(estructura,"categoricas_nd_spnn1")
-data[,categoricas_nd_spnn1]  <- data[,categoricas_nd_spnn1] %>% 
-  mutate_all(funs(recode(var = ., 
-                         recodes = "0=0;
-                         1=0;2=100;
-                         3=25;8=50;
-                         9=50")))
+#categoricas_nd_spnn1 <- get_var_from_type(estructura,"categoricas_nd_spnn1")
+#data[,categoricas_nd_spnn1]  <- data[,categoricas_nd_spnn1] %>% 
+ # mutate_all(funs(recode(var = ., 
+  #                       recodes = "0=0;
+   #                      1=0;2=100;
+  #                       3=25;8=50;
+  #                       9=50")))
 
 #Existencia de Atlas de Riesgo
 #Participacion ciudadana
@@ -46,8 +46,8 @@ data[,categoricas_nd_nsnn1y4]  <- data[,categoricas_nd_nsnn1y4] %>%
                          1=0;2=100;
                          8=50;9=50")))
 
-# Cobro predial
-# {0-NA|1-gobierno municipal|2-gobierno de la Entidad Federativa|3-No se cobra|9-No se sabe}
+#Cobro predial
+#{0-NA|1-gobierno municipal|2-gobierno de la Entidad Federativa|3-No se cobra|9-No se sabe}
 categoricas_aut_cobr <- get_var_from_type(estructura,"categoricas_aut_cobr")
 data[,categoricas_aut_cobr]  <- data[,categoricas_aut_cobr] %>% 
   mutate_all(funs(recode(var = ., 
@@ -58,8 +58,8 @@ data[,categoricas_aut_cobr]  <- data[,categoricas_aut_cobr] %>%
 #Info publica disponible
 
 #Mecanismos de transparencia
-data <- data %>% 
-  mutate(mec_tran = ifelse(mec_tran!=0,100,0))
+#data <- data %>% 
+#  mutate(mec_tran = ifelse(mec_tran!=0,100,0))
 ```
 
 # Limpieza Numéricas
@@ -80,7 +80,6 @@ data[,mas_mejor] <- data[,mas_mejor]*-1
 # kmeans (por ahora)
 lapply(numericas, get_cuts, data=data)
 ```
-
 
 # Análisis de Correlación
 
@@ -133,6 +132,8 @@ data[dimension] <- data[subdimensiones] %>% as.data.frame() %>%
 }
 
 data["INFORM"] <-apply(data[dimensiones], 1,geometric.mean,na.rm=TRUE)
+inform_agregado <- data %>% dplyr::select(cve_muni, INFORM, dimensiones)
+ranking_inform <- inform_agregado[order(inform_agregado$INFORM),] # poner número
 ```
 
 

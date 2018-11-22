@@ -8,7 +8,7 @@ Inform:
               variable:
                 gp_inundac:
                   tipo:
-                    categorica_5:
+                    - categorica_5
                 gp_sequia2:
                   tipo:
                     - categorica_5
@@ -76,7 +76,7 @@ Inform:
                     - categorica_nd_spnn1
                 nd_nsnn4:
                   tipo:
-                    - categoricas_nd_nsnn1y4
+                    - categorica_nd_nsnn1y4
             #2.1.2 Acceso a la Justicia:
             2.1.3 Reglamentación Básica:
               variable:
@@ -99,12 +99,12 @@ Inform:
           Subsubdimensión:
             2.2.1 Finanzas Públicas:
               variable:
-                #aut_cobr:
-                  #tipo:
-                    #- categorica_aut_cobr
-                #totalpo1:
-                  #tipo:
-                    #- numerica
+                aut_cobr:
+                  tipo:
+                    - categorica_aut_cobr
+                totalpo1:
+                  tipo:
+                    - numerica
                 capacidad_inversion:
                   tipo:
                     - numerica
