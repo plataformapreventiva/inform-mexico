@@ -70,4 +70,3 @@ plot_map <- function(data, variable, palette){
                          legend = variable) +
     scale_fill_brewer(palette = palette, na.value=NA,  name = variable) 
 }  
-
