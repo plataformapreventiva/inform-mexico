@@ -71,7 +71,8 @@ if(length(opt) > 1){
 
   print('Pulling datasets')
   
-  data <- tbl(con, dbplyr::in_schema('features','inform_variables_municipios'))
+  data <- tbl(con, dbplyr::in_schema('features','inform_variables_municipios')) %>% retrieve_result() %>%
+    select(-c(actualizacion_sedesol,data_date))
   estructura <- read_yaml("data/estructura_indice.yaml")
   
   #----------------------------------------------------------------------------------------
@@ -142,13 +143,20 @@ if(length(opt) > 1){
   data <- to_numeric(data, vulnerabilidad)
   data <- to_numeric(data, capacidades) 
   
+  inform_input <- mice(data = data, m=5, method = "pmm", maxit = 10, seed = 500)
+  
+  i1 <- complete(inform_input,1)
+  #i2 <- complete(inform_input,2)
+  #i3 <- complete(inform_input,3)
+  #i4 <- complete(inform_input,4)
+  #i5 <- complete(inform_input,5)
+  
   #----------------------------------------------------------------------------------------
   
   # AGREGADO DE DIMENSIÓN
-  # TODO() - recursive function
-  # Try other aggregate functions
   dimensiones <- names(estructura$Inform$Dimensión)
-    
+  
+  # Media aritmética entre subdimensiones
   for (dimension in dimensiones) {
     subdimensiones <- estructura$Inform$Dimensión[[eval(dimension)]] %>% 
       purrr::flatten() %>% names()
@@ -158,26 +166,27 @@ if(length(opt) > 1){
         purrr::flatten() %>% names()
       for (Subsubdimensión in Subsubdimensiones) {
         variables <- get_var_from_name(estructura,Subsubdimensión)
-        data[Subsubdimensión] <- data[variables] %>% as.data.frame() %>% 
+        i1[Subsubdimensión] <- i1[variables] %>% as.data.frame() %>% 
           rowMeans(na.rm = TRUE)
       }
-      data[subdimension] <- data[Subsubdimensiones] %>% as.data.frame() %>% 
+      i1[subdimension] <- i1[Subsubdimensiones] %>% as.data.frame() %>% 
         rowMeans(na.rm = TRUE)
     }
-    data[dimension] <- data[subdimensiones] %>% as.data.frame() %>% 
+    i1[dimension] <- i1[subdimensiones] %>% as.data.frame() %>% 
       rowMeans(na.rm = TRUE)
   }
   
-  data["INFORM"] <-apply(data[dimensiones], 1,geometric.mean,na.rm=TRUE)
-  inform <- data %>% dplyr::select(cve_muni, INFORM,dimensiones,amenazas,capacidades,vulnerabilidad)
+  # Media geométrica entre dimensiones
+  i1["INFORM"] <-apply(i1[dimensiones], 1,geometric.mean,na.rm=TRUE)
+  inform <- i1 %>% dplyr::select(cve_muni, INFORM,dimensiones,amenazas,capacidades,vulnerabilidad)
   inform <- arrange(inform, desc(INFORM)) %>%
-    mutate(ranking = 1:nrow(inform))
-  
+    mutate(ranking = 1:nrow(inform)) 
+    
   #----------------------------------------------------------------------------------------
   
   # Save model table
   table_id = DBI::Id(schema = 'models', table = 'inform_index')
-  copy_to(con, inform,
+  copy_to(con, i1,
           name=in_schema("models",opt$pipeline),
           temporary = FALSE, overwrite = TRUE)
   dbDisconnect(con)
