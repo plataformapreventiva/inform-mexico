@@ -72,7 +72,7 @@ if(length(opt) > 1){
   print('Pulling datasets')
   
   data <- tbl(con, dbplyr::in_schema('features','inform_variables_municipios')) %>% retrieve_result() %>%
-    select(-c(actualizacion_sedesol,data_date))
+    select(-c(actualizacion_sedesol,data_date,media_salario_m,media_salario_h))
   estructura <- read_yaml("data/estructura_indice.yaml")
   
   #----------------------------------------------------------------------------------------
@@ -89,6 +89,12 @@ if(length(opt) > 1){
                            recodes = "'Muy bajo'=0;
                            'Bajo'=25;
                            'Medio'=50;'Alto'=75;
+                           'Muy alto'=100")))
+  
+  categoricas_tsunami <- get_var_from_type(estructura,"categorica_tsunami")
+  data[,categoricas_tsunami]  <- data[,categoricas_tsunami] %>% 
+    mutate_all(funs(recode(var = ., 
+                           recodes = "'Sin peligro'=0;
                            'Muy alto'=100")))
   
   #Existencia de unidad de protección civil
@@ -142,7 +148,7 @@ if(length(opt) > 1){
   data <- to_numeric(data, amenazas) 
   data <- to_numeric(data, vulnerabilidad)
   data <- to_numeric(data, capacidades) 
-  
+
   inform_input <- mice(data = data, m=5, method = "pmm", maxit = 10, seed = 500)
   
   i1 <- complete(inform_input,1)

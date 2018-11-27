@@ -20,7 +20,7 @@ Inform:
                     - categorica_5
                 gp_tsunami:
                   tipo:
-                    - categorica_5
+                    - categorica_tsunami
             1.1.2 Fenómeno Geológico:
               variable:
                 g_suscelad:
@@ -65,6 +65,11 @@ Inform:
                 migracion_externa_reciente:
                   tipo:
                     - numerica
+            1.2.3 Amenazas Económicas:
+              variable:
+                indice_dif:
+                  tipo:
+                    - numerica
     2. Falta de Capacidades de Respuesta:
       Subdimensión:
         2.1 Capacidad Institucional:
@@ -77,24 +82,37 @@ Inform:
                 nd_nsnn4:
                   tipo:
                     - categorica_nd_nsnn1y4
-            #2.1.2 Acceso a la Justicia:
+            2.1.2 Acceso a la Justicia:
+            variable:
+                num_jueces:
+                  tipo:
+                    - numerica
+                num_agentes_fiscales:
+                  tipo:
+                    - numerica
+                gobiernos:
+                  tipo:
+                    - numerica
             2.1.3 Reglamentación Básica:
               variable:
                 indice:
                   tipo:
                     - numerica
                     - mas_mejor
-                #mec_tran:
-                  #tipo:
-                    #- categorica_mec_tran
-                #inf_publ:
-                  #tipo:
-                    #- numerica
-            #2.1.4 Gobernabilidad:
-              #variable:
-                #nd_nsnn1:
-                  #tipo:
-                    #- categoricas_nd_nsnn1y4
+                mec_tran:
+                  tipo:
+                    - categorica_mec_tran
+                inf_publ:
+                  tipo:
+                    - numerica
+            2.1.4 Gobernabilidad:
+              variable:
+                nd_nsnn1:
+                  tipo:
+                    - categoricas_nd_nsnn1y4
+                politico:
+                  tipo:
+                    - numerica
         2.2 Capacidad financiera:
           Subsubdimensión:
             2.2.1 Finanzas Públicas:
@@ -102,9 +120,11 @@ Inform:
                 aut_cobr:
                   tipo:
                     - categorica_aut_cobr
+                    - mas_mejor
                 totalpo1:
                   tipo:
                     - numerica
+                    - mas_mejor
                 capacidad_inversion:
                   tipo:
                     - numerica
@@ -113,12 +133,25 @@ Inform:
                   tipo:
                     - numerica
                     - mas_mejor 
+                endeudamiento:
+                  tipo:
+                    - numerica
+                liquidez:
+                  tipo:
+                    - numerica
+                    - mas_mejor
             2.2.2 Capacidad Económica:
               variable:
                 complejidad_2014:
                   tipo:
                     - numerica
-                    - mas_mejor   
+                    - mas_mejor 
+            2.2.3 Administrativa / operativa:
+              variable:
+                valor_ici:
+                  tipo:
+                    - numerica
+                    - mas_mejor
         2.3 Capacidad de infraestructura:
           Subsubdimensión:
             2.3.1 Comunicación y energía:
@@ -165,6 +198,11 @@ Inform:
       Subdimensión:
         3.1 Vulnerabilidad Socioeconomica:
           Subsubdimensión:
+            3.1.1 Carencia por acceso a alimentación:
+              variable:
+                ic_ali_porcentaje:
+                  tipo:
+                    - numerica
             3.1.2 Rezago Educativo:
               variable:
                 ic_rezedu_porcentaje:
@@ -195,7 +233,7 @@ Inform:
                 vul_ing_porcentaje:
                   tipo:
                     - numerica
-        3.1 Grupos Sociales en Condición de Vulnerabilidad:
+        3.2 Grupos Sociales en Condición de Vulnerabilidad:
           Subsubdimensión:
             3.2.1 Grupos etarios:
               variable:
@@ -247,3 +285,25 @@ Inform:
                   tipo:
                     - numerica
                     - mas_mejor
+                proporcion_guar:
+                  tipo:
+                    - numerica
+                    - mas_mejor
+                brecha_salario_mensual:
+                  tipo:
+                    - numerica
+                    - mas_mejor
+            3.2.5 Personas con discapacidad:
+              variable:
+                disc_int:
+                  tipo:
+                    - numerica
+                disc_fis:
+                  tipo:
+                    - numerica
+                disc_sens:
+                  tipo:
+                    - numerica
+                disc_men:
+                  tipo:
+                    - numerica
