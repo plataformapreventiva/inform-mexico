@@ -71,7 +71,7 @@ if(length(opt) > 1){
 
   print('Pulling datasets')
   
-  data <- tbl(con, dbplyr::in_schema('features','inform_variables_municipios')) %>% retrieve_result()
+  data <- tbl(con, dbplyr::in_schema('features','inform_variables_municipios'))
   estructura <- read_yaml("data/estructura_indice.yaml")
   
   #----------------------------------------------------------------------------------------
