@@ -71,8 +71,8 @@ if(length(opt) > 1){
 
   print('Pulling datasets')
   
-  data <- tbl(con, dbplyr::in_schema('features','inform_variables_municipios')) 
-  estructura <- read_yaml("data/estructura_indice.yaml") # preguntar de dónde leerlo
+  data <- tbl(con, dbplyr::in_schema('features','inform_variables_municipios')) %>% retrieve_result()
+  estructura <- read_yaml("data/estructura_indice.yaml")
   
   #----------------------------------------------------------------------------------------
   
@@ -92,13 +92,13 @@ if(length(opt) > 1){
   
   #Existencia de unidad de protección civil
   #{0-NA|1-si|2-no|3-en proceso de integracion|8-info no disponible|9-no se sabe}
-  #categoricas_nd_spnn1 <- get_var_from_type(estructura,"categoricas_nd_spnn1")
-  #data[,categoricas_nd_spnn1]  <- data[,categoricas_nd_spnn1] %>% 
-  # mutate_all(funs(recode(var = ., 
-  #                       recodes = "0=0;
-  #                      1=0;2=100;
-  #                       3=25;8=50;
-  #                       9=50")))
+  categoricas_nd_spnn1 <- get_var_from_type(estructura,"categorica_nd_spnn1")
+  data[,categoricas_nd_spnn1]  <- data[,categoricas_nd_spnn1] %>% 
+  mutate_all(funs(recode(var = ., 
+                         recodes = "0=0;
+                        1=0;2=100;
+                         3=25;8=50;
+                         9=50")))
   
   #Existencia de Atlas de Riesgo
   #Participacion ciudadana
@@ -118,12 +118,6 @@ if(length(opt) > 1){
                          recodes = "0=0;
                         1=0;2=25;
                        8=100;9=50")))
-  
-  #Info publica disponible
-  
-  #Mecanismos de transparencia
-  #data <- data %>% 
-  #  mutate(mec_tran = ifelse(mec_tran!=0,100,0))
   
   #----------------------------------------------------------------------------------------
   
@@ -154,7 +148,7 @@ if(length(opt) > 1){
   # TODO() - recursive function
   # Try other aggregate functions
   dimensiones <- names(estructura$Inform$Dimensión)
-  
+    
   for (dimension in dimensiones) {
     subdimensiones <- estructura$Inform$Dimensión[[eval(dimension)]] %>% 
       purrr::flatten() %>% names()
@@ -175,9 +169,9 @@ if(length(opt) > 1){
   }
   
   data["INFORM"] <-apply(data[dimensiones], 1,geometric.mean,na.rm=TRUE)
-  inform <- data %>% dplyr::select(cve_muni, INFORM, dimensiones)
+  inform <- data %>% dplyr::select(cve_muni, INFORM,dimensiones,amenazas,capacidades,vulnerabilidad)
   inform <- arrange(inform, desc(INFORM)) %>%
-    mutate(ranking = 1:nrow(inform)) # poner número de ranking
+    mutate(ranking = 1:nrow(inform))
   
   #----------------------------------------------------------------------------------------
   
