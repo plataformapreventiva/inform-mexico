@@ -25,6 +25,7 @@ con <- prev_connect()
 
 get_cuts<-function(data, varx){
   # Generación de Cortes
+  
   yy<-as.numeric(unlist(data[,varx] %>% drop_na() ))
   yy<-yy[!is.infinite(yy)]
   ## Se revisa orientación: ¿más es mejor o menos es mejor?
