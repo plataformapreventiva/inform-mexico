@@ -65,11 +65,11 @@ Inform:
                 migracion_externa_reciente:
                   tipo:
                     - numerica
-            1.2.3 Amenazas Económicas:
-              variable:
-                indice_dif:
-                  tipo:
-                    - numerica
+            #1.2.3 Amenazas Económicas:
+             # variable:
+            #    indice_dif:
+             #     tipo:
+              #      - numerica
     2. Falta de Capacidades de Respuesta:
       Subdimensión:
         2.1 Capacidad Institucional:
@@ -81,9 +81,9 @@ Inform:
                     - categorica_nd_spnn1
                 nd_nsnn4:
                   tipo:
-                    - categorica_nd_nsnn1y4
+                    - categorica_nd_nsnn4
             2.1.2 Acceso a la Justicia:
-            variable:
+              variable:
                 num_jueces:
                   tipo:
                     - numerica
@@ -102,17 +102,17 @@ Inform:
                 mec_tran:
                   tipo:
                     - categorica_mec_tran
-                inf_publ:
-                  tipo:
-                    - numerica
+                #inf_publ:
+                 # tipo:
+                  #  - numerica
             2.1.4 Gobernabilidad:
               variable:
                 nd_nsnn1:
                   tipo:
-                    - categoricas_nd_nsnn1y4
+                    - categorica_nd_nsnn1
                 politico:
                   tipo:
-                    - numerica
+                    - categorica_politico
         2.2 Capacidad financiera:
           Subsubdimensión:
             2.2.1 Finanzas Públicas:

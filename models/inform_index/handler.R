@@ -5,6 +5,7 @@ library(dplyr)
 library(DBI)
 library(lubridate)
 library(yaml)
+library(mice)
 
 option_list = list(
   make_option(c("--current_date"), type="character", default="",
@@ -32,7 +33,7 @@ opt <- tryCatch(
   },
   error=function(cond) {
     message("Error: Provide database connection arguments appropriately.")
-    message(cond)
+    message(cond) 
     print_help(opt_parser)
     return(NA)
   },
@@ -72,7 +73,7 @@ if(length(opt) > 1){
   print('Pulling datasets')
   
   data <- tbl(con, dbplyr::in_schema('features','inform_variables_municipios')) %>% retrieve_result() %>%
-    select(-c(actualizacion_sedesol,data_date,media_salario_m,media_salario_h))
+    select(-c(actualizacion_sedesol,data_date,media_salario_m,media_salario_h,pobreza_porcentaje,inf_publ,indice_dif))
   estructura <- read_yaml("data/estructura_indice.yaml")
   
   #----------------------------------------------------------------------------------------
@@ -110,21 +111,54 @@ if(length(opt) > 1){
   #Existencia de Atlas de Riesgo
   #Participacion ciudadana
   #{0-NA|1-si|2-no|8-info no disponible|9-no se sabe}
-  categoricas_nd_nsnn1y4 <- get_var_from_type(estructura,"categorica_nd_nsnn1y4")
-  data[,categoricas_nd_nsnn1y4]  <- data[,categoricas_nd_nsnn1y4] %>% 
+  categoricas_nd_nsnn4 <- get_var_from_type(estructura,"categorica_nd_nsnn4")
+  data[,categoricas_nd_nsnn4]  <- data[,categoricas_nd_nsnn4] %>% 
     mutate_all(funs(recode(var = ., 
                            recodes = "0=0;
                          1=0;2=100;
                          8=50;9=50")))
   
+  # Gobernabilidad
+  # Existencia de órganos de participación ciudadana
+  #{0-NA|1-si}
+  categoricas_nd_nsnn1 <- get_var_from_type(estructura,"categorica_nd_nsnn1")
+  data[,categoricas_nd_nsnn1]  <- data[,categoricas_nd_nsnn1] %>% 
+    mutate_all(funs(recode(var = ., 
+                           recodes = "0=100;1=0")))
+  
   # Cobro predial
   # {0-NA|1-gobierno municipal|2-gobierno de la Entidad Federativa|3-No se cobra|9-No se sabe}
   categoricas_aut_cobr <- get_var_from_type(estructura,"categorica_aut_cobr")
   data[,categoricas_aut_cobr]  <- data[,categoricas_aut_cobr] %>% 
-   mutate_all(funs(recode(var = ., 
-                         recodes = "0=0;
-                        1=0;2=25;
-                       8=100;9=50")))
+    mutate_all(funs(recode(var = ., 
+                           recodes = "0=0;
+                        1=0;2=25;3=
+                       3=100;9=50")))
+  
+  # Mecanismos de transferencia
+  # {(1+1+1)/3}
+  categoricas_mec_tran <- get_var_from_type(estructura,"categorica_mec_tran")
+  data[,categoricas_mec_tran]  <- data[,categoricas_mec_tran] %>% 
+    mutate_all(funs(recode(var = ., 
+                           recodes = "0=100;
+                        1/3=75;2/3=50;1=0")))
+  
+  # índice sist político estable
+  # ranking 1-32
+  categoricas_politico <- get_var_from_type(estructura,"categorica_politico")
+  data[,categoricas_politico]  <- data[,categoricas_politico] %>% 
+    mutate_all(funs(recode(var = ., 
+                           recodes = "1=0;2=0;3=0;
+                                      4=0;5=0;6=0;
+                                      7=25;8=25;9=25;
+                                      10=25;11=25;12=25;
+                                      13=50;14=50;15=50;
+                                      16=50;17=50;18=50;
+                                      19=50;20=75;21=75;
+                                      22=75;23=75;24=75;
+                                      25=75;26=75;27=100;
+                                      28=100;29=100;30=100;
+                                         31=100;32=100")))
   
   #----------------------------------------------------------------------------------------
   
@@ -180,11 +214,48 @@ if(length(opt) > 1){
     }
     i1[dimension] <- i1[subdimensiones] %>% as.data.frame() %>% 
       rowMeans(na.rm = TRUE)
-  }
+    }
   
   # Media geométrica entre dimensiones
   i1["INFORM"] <-apply(i1[dimensiones], 1,geometric.mean,na.rm=TRUE)
-  inform <- i1 %>% dplyr::select(cve_muni, INFORM,dimensiones,amenazas,capacidades,vulnerabilidad)
+  inform <- i1 %>% dplyr::select(cve_muni, INFORM,dimensiones,
+                                 amenazas,capacidades,vulnerabilidad,
+                                 `1. Amenazas y Exposición`,
+                                 `2. Falta de Capacidades de Respuesta`,
+                                 `3. Vulnerabilidad`,
+                                 `1.1 Fenómenos Naturales`,
+                                 `1.1.1 Fenómeno Hidrometeorológico`,
+                                 `1.1.2 Fenómeno Geológico`,
+                                 `1.2 Fenómenos Antropogénicos`,
+                                 `1.2.1 Violencia y Delincuencia`,                           
+                                 `1.2.2. Amenazas Demográficas`,
+                                 `2.1 Capacidad Institucional`, 
+                                 `2.1.1 Gestión de Riesgo de Desastre`,                      
+                                 `2.1.2 Acceso a la Justicia`,                                
+                                 `2.1.3 Reglamentación Básica`,                              
+                                 `2.1.4 Gobernabilidad`,
+                                 `2.2 Capacidad financiera`, 
+                                 `2.2.1 Finanzas Públicas`,                                   
+                                 `2.2.2 Capacidad Económica`,                                
+                                 `2.2.3 Administrativa / operativa`,  
+                                 `2.3 Capacidad de infraestructura`, 
+                                 `2.3.1 Comunicación y energía`,                              
+                                 `2.3.2 Sistema de Gestión Municipal`,                       
+                                 `2.3.3 Capacidad Instalada del Sistema de Salud`,            
+                                 `3.1 Vulnerabilidad Socioeconomica`, 
+                                 `3.1.1 Carencia por acceso a alimentación`,                 
+                                 `3.1.2 Rezago Educativo`,                                    
+                                 `3.1.3 Carencia por acceso a servicios de salud`,           
+                                 `3.1.4 Carencia por acceso a seguridad social`,              
+                                 `3.1.5 Carencia por calidad y espacios de vivienda`,        
+                                 `3.1.6 Carencia por acceso a servicios básicos de vivienda`, 
+                                 `3.1.7 Ingreso`,                                            
+                                 `3.2 Grupos Sociales en Condición de Vulnerabilidad`,
+                                 `3.2.1 Grupos etarios`,                                     
+                                 `3.2.2 Población indígena`,                                  
+                                 `3.2.3 Tipología de Hogares`,                               
+                                 `3.2.4 Desigualdad`,                                         
+                                 `3.2.5 Personas con discapacidad`)                          
   inform <- arrange(inform, desc(INFORM)) %>%
     mutate(ranking = 1:nrow(inform)) 
     
