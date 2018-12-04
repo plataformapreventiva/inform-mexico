@@ -195,6 +195,7 @@ if(length(opt) > 1){
   
   # AGREGADO DE DIMENSIÓN
   dimensiones <- names(estructura$Inform$Dimensión)
+  df <- NULL
   
   # Media aritmética entre subdimensiones
   for (dimension in dimensiones) {
@@ -206,15 +207,18 @@ if(length(opt) > 1){
         purrr::flatten() %>% names()
       for (Subsubdimensión in Subsubdimensiones) {
         variables <- get_var_from_name(estructura,Subsubdimensión)
-        i1[Subsubdimensión] <- i1[variables] %>% as.data.frame() %>% 
-          rowMeans(na.rm = TRUE)
+        pca_subsub <- i1[variables] %>% prcomp()
+        i1[Subsubdimensión] <- pca_subsub$x[,1] %>% as.data.frame()
+        
       }
+      print(pca_subsub$sdev^2 / sum(pca_subsub$sdev^2))
       i1[subdimension] <- i1[Subsubdimensiones] %>% as.data.frame() %>% 
         rowMeans(na.rm = TRUE)
     }
     i1[dimension] <- i1[subdimensiones] %>% as.data.frame() %>% 
       rowMeans(na.rm = TRUE)
-    }
+  }
+        
   
   # Media geométrica entre dimensiones
   i1["INFORM"] <-apply(i1[dimensiones], 1,geometric.mean,na.rm=TRUE)
