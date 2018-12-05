@@ -7,8 +7,8 @@ paquetes <- c("optparse", "dbplyr", "dplyr",
               "mice", "rlist", "car","psych",
               "classInt","stringr")
 no_instalados <- paquetes[!(paquetes %in% installed.packages()[,"Package"])]
-if(length(no_instalados)) install.packages(no_instalados)
-lapply(paquetes, library, character.only = TRUE)
+#if(length(no_instalados)) install.packages(no_instalados)
+#lapply(paquetes, library, character.only = TRUE)
 
 
 get_cuts<-function(data, varx){
