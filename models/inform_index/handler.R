@@ -13,6 +13,8 @@ install.packages("car")
 install.packages("rlist")
 install.packages("stringr")
 install.packages("classInt")
+install.packages("tidyr")
+
 
 
 library(mice)
