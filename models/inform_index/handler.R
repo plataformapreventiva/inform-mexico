@@ -9,6 +9,12 @@ library(lubridate)
 library(yaml)
 install.packages("mice")
 install.packages("psych")
+install.packages("car")
+install.packages("rlist")
+install.packages("stringr")
+install.packages("classInt")
+
+
 library(mice)
 library(psych)
 library(car)
