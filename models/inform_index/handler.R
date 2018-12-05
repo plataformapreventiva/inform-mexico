@@ -1,5 +1,7 @@
 #!/usr/bin/env Rscript
 source("models/inform_index/aux.R")
+options(warn=-1)
+
 option_list = list(
   make_option(c("--current_date"), type="character", default="",
               help="current date", metavar="character"),
