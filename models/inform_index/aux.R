@@ -5,7 +5,7 @@
 paquetes <- c("optparse", "dbplyr", "dplyr",
               "DBI", "lubridate", "yaml",
               "mice", "rlist", "car","psych",
-              "classInt")
+              "classInt","stringr")
 no_instalados <- paquetes[!(paquetes %in% installed.packages()[,"Package"])]
 if(length(no_instalados)) install.packages(no_instalados)
 lapply(paquetes, library, character.only = TRUE)
