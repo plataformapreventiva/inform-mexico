@@ -2,14 +2,17 @@
 
 # Dependencies
 
-paquetes <- c("optparse", "dbplyr", "dplyr",
-              "DBI", "lubridate", "yaml",
-              "mice", "rlist", "car","psych",
-              "classInt","stringr")
+paquetes <- c("optparse", "mice",
+              "psych", "car",
+              "rlist", "stringr",
+              "classInt", "tidyr",
+              "scales")
 no_instalados <- paquetes[!(paquetes %in% installed.packages()[,"Package"])]
-#if(length(no_instalados)) install.packages(no_instalados)
-#lapply(paquetes, library, character.only = TRUE)
+if(length(no_instalados)) install.packages(no_instalados)
+lapply(paquetes, library, character.only = TRUE)
 
+
+# Functions
 
 get_cuts<-function(data, varx){
   # Generación de Cortes
@@ -21,7 +24,6 @@ get_cuts<-function(data, varx){
   cutoffs<-classes$brks
   yy<-as.numeric(unlist(data[,varx])) ## No se tiran na's (data ya imputado)
   data[,varx] <<- cut(x=yy, include.lowest = T, breaks=cutoffs, labels=c(0,25,50,75,100))
-  #data[,paste(varx,"_kmeans", sep="")] <<- cut(x=yy, include.lowest = T, breaks=cutoffs, labels=c(0,25,50,75,100))
   data[[eval(varx)]] <- as.numeric(as.character(data[[eval(varx)]]))
 }
 
@@ -37,6 +39,7 @@ get_var_from_type <- function(estructura, pattern){
 
 get_var_from_name <- function(estructura, pattern){
   # Obtener variable del yaml con regex
+
   variables <- purrr::flatten(estructura) %>% unlist() %>% names() %>% list()
   variables <- list.search(variables, .[grepl(pattern,.)])
   variables <- lapply(variables,

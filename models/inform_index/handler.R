@@ -6,15 +6,6 @@ library(dplyr)
 library(DBI)
 library(lubridate)
 library(yaml)
-install.packages("mice")
-install.packages("psych")
-install.packages("car")
-install.packages("rlist")
-install.packages("stringr")
-install.packages("classInt")
-install.packages("tidyr")
-
-
 library(tidyr)
 library(mice)
 library(psych)
@@ -22,6 +13,7 @@ library(car)
 library(rlist)
 library(classInt)
 library(stringr)
+library(scales)
 
 source("models/inform_index/aux.R")
 
@@ -235,8 +227,9 @@ if(length(opt) > 1){
       for (Subsubdimensión in Subsubdimensiones) {
         variables <- get_var_from_name(estructura,Subsubdimensión)
         pca_subsub <- i1[variables] %>% prcomp()
-        i1[Subsubdimensión] <- pca_subsub$x[,1] %>% as.data.frame()
-
+        i1[Subsubdimensión] <- pca_subsub$x[,1] %>%
+            scales::rescale(to=c(1,100)) %>%
+            as.data.frame()
       }
       print(pca_subsub$sdev^2 / sum(pca_subsub$sdev^2))
       i1[subdimension] <- i1[Subsubdimensiones] %>% as.data.frame() %>%
