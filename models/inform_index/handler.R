@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-source("aux.R")
+source("./models/inform_index/aux.R")
 option_list = list(
   make_option(c("--current_date"), type="character", default="",
               help="current date", metavar="character"),
@@ -67,7 +67,7 @@ if(length(opt) > 1){
 
   data <- tbl(con, dbplyr::in_schema('features','inform_variables_municipios')) %>% retrieve_result() %>%
     select(-c(actualizacion_sedesol,data_date,media_salario_m,media_salario_h,pobreza_porcentaje,inf_publ,indice_dif))
-  estructura <- read_yaml("../../data/estructura_indice.yaml")
+  estructura <- read_yaml("./data/estructura_indice.yaml")
 
   #----------------------------------------------------------------------------------------
 
