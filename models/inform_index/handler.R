@@ -1,5 +1,4 @@
 #!/usr/bin/env Rscript
-source("models/inform_index/aux.R")
 options(warn=-1)
 library(optparse)
 library(dbplyr)
@@ -24,6 +23,7 @@ library(rlist)
 library(classInt)
 library(stringr)
 
+source("models/inform_index/aux.R")
 
 
 
