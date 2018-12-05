@@ -16,7 +16,7 @@ install.packages("classInt")
 install.packages("tidyr")
 
 
-
+library(tidyr)
 library(mice)
 library(psych)
 library(car)

@@ -14,7 +14,7 @@ no_instalados <- paquetes[!(paquetes %in% installed.packages()[,"Package"])]
 get_cuts<-function(data, varx){
   # Generación de Cortes
 
-  yy<-as.numeric(unlist(data[,varx] %>% drop_na() ))
+  yy<-as.numeric(unlist(data[,varx] ) )
   yy<-yy[!is.infinite(yy)]
   ## Se revisa orientación: ¿más es mejor o menos es mejor?
   classes<-classIntervals(var=yy, n=5, style="kmeans") ## Se encuentran los puntos de corte
