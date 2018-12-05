@@ -1,6 +1,23 @@
 #!/usr/bin/env Rscript
 source("models/inform_index/aux.R")
 options(warn=-1)
+library(optparse)
+library(dbplyr)
+library(dplyr)
+library(DBI)
+library(lubridate)
+library(yaml)
+library(mice)
+library(psych)
+library(car)
+library(rlist)
+library(classInt)
+library(stringr)
+
+
+
+
+
 
 option_list = list(
   make_option(c("--current_date"), type="character", default="",
