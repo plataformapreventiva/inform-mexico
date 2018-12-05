@@ -65,7 +65,7 @@ if(length(opt) > 1){
 
   print('Pulling datasets')
 
-  data <- tbl(con, dbplyr::in_schema('features','inform_variables_municipios')) %>% retrieve_result() %>%
+  data <- tbl(con, dbplyr::in_schema('features','inform_variables_municipios'))  %>%
     select(-c(actualizacion_sedesol,data_date,media_salario_m,media_salario_h,pobreza_porcentaje,inf_publ,indice_dif))
   estructura <- read_yaml("./data/estructura_indice.yaml")
 
