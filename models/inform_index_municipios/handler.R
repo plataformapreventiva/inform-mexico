@@ -88,8 +88,8 @@ if(length(opt) > 1){
   print('Pulling datasets')
 
   data <- tbl(con, dbplyr::in_schema('features','inform_variables_municipios'))  %>%
-    select(-c(actualizacion_sedesol,data_date,media_salario_m,media_salario_h,pobreza_porcentaje,inf_publ,indice_dif)) %>%
-    collect() 
+    select(-c(actualizacion_sedesol,data_date,media_salario_m,media_salario_h,pobreza_porcentaje,inf_publ)) %>%
+    collect()
   estructura <- read_yaml("data/estructura_indice.yaml")
 
   #----------------------------------------------------------------------------------------
@@ -255,9 +255,17 @@ if(length(opt) > 1){
   #----------------------------------------------------------------------------------------
 
   # Save model table
+
+  temp <- sapply(colnames(inform),str_replace_all, "[1-9].","")
+  colnames(inform) <- sapply(temp,str_replace_all, " +","_")
+  colnames(inform) <- sapply(colnames(inform),str_replace_all, "^_","")
+  colnames(inform) <-  sapply(colnames(inform),str_to_lower)
+  colnames(inform) <- sapply(colnames(inform),str_replace_all, "/","")
+  colnames(inform) <- sapply(colnames(inform),iconv, from="UTF-8",to="ASCII//TRANSLIT")
+
   table_id = DBI::Id(schema = 'models', table = 'inform_index')
-  copy_to(con, i1,
-          name=in_schema("models",opt$pipeline),
+  copy_to(con, inform,
+          name=in_schema("models",'inform_index_municipios'),
           temporary = FALSE, overwrite = TRUE)
   dbDisconnect(con)
 
