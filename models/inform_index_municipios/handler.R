@@ -118,9 +118,9 @@ if(length(opt) > 1){
   #{0-NA|1-si|2-no|3-en proceso de integracion|8-info no disponible|9-no se sabe}
   categoricas_nd_spnn1 <- get_var_from_type(estructura,"categorica_nd_spnn1")
   data[,categoricas_nd_spnn1]  <- data[,categoricas_nd_spnn1] %>%
-    mutate_all(funs(recode(var = .,
+    mutate_all(funs(car::recode(var = .,
                          recodes = "0=0;
-                        1=0;2=100;
+                         1=0;2=100;
                          3=25;8=50;
                          9=50")))
 
@@ -129,41 +129,41 @@ if(length(opt) > 1){
   #{0-NA|1-si|2-no|8-info no disponible|9-no se sabe}
   categoricas_nd_nsnn4 <- get_var_from_type(estructura,"categorica_nd_nsnn4")
   data[,categoricas_nd_nsnn4]  <- data[,categoricas_nd_nsnn4] %>%
-    mutate_all(funs(recode(var = .,
-                           recodes = "0=0;
-                         1=0;2=100;
-                         8=50;9=50")))
+    mutate_all(funs(car::recode(var = .,
+                                recodes = "0=0;
+                                1=0;2=100;
+                                8=50;9=50")))
 
   # Gobernabilidad
   # Existencia de órganos de participación ciudadana
   #{0-NA|1-si}
   categoricas_nd_nsnn1 <- get_var_from_type(estructura,"categorica_nd_nsnn1")
   data[,categoricas_nd_nsnn1]  <- data[,categoricas_nd_nsnn1] %>%
-    mutate_all(funs(recode(var = .,
-                           recodes = "0=100;1=0")))
+    mutate_all(funs(car::recode(var = .,
+                                recodes = "0=100;1=0")))
 
   # Cobro predial
   # {0-NA|1-gobierno municipal|2-gobierno de la Entidad Federativa|3-No se cobra|9-No se sabe}
   categoricas_aut_cobr <- get_var_from_type(estructura,"categorica_aut_cobr")
   data[,categoricas_aut_cobr]  <- data[,categoricas_aut_cobr] %>%
-    mutate_all(funs(recode(var = .,
+    mutate_all(funs(car::recode(var = .,
                            recodes = "0=0;
-                        1=0;2=25;3=
-                       3=100;9=50")))
+                           1=0;2=25;
+                           3=100;9=50")))
 
   # Mecanismos de transferencia
   # {(1+1+1)/3}
   categoricas_mec_tran <- get_var_from_type(estructura,"categorica_mec_tran")
   data[,categoricas_mec_tran]  <- data[,categoricas_mec_tran] %>%
-    mutate_all(funs(recode(var = .,
-                           recodes = "0=100;
-                        1/3=75;2/3=50;1=0")))
+    mutate_all(funs(car::recode(var = .,
+                                recodes = "0=100;
+                                1/3=75;2/3=50;1=0")))
 
   # índice sist político estable
   # ranking 1-32
   categoricas_politico <- get_var_from_type(estructura,"categorica_politico")
   data[,categoricas_politico]  <- data[,categoricas_politico] %>%
-    mutate_all(funs(recode(var = .,
+    mutate_all(funs(car::recode(var = .,
                            recodes = "1=0;2=0;3=0;
                                       4=0;5=0;6=0;
                                       7=25;8=25;9=25;
