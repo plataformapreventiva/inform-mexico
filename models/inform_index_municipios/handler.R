@@ -110,7 +110,7 @@ if(length(opt) > 1){
 
   categoricas_tsunami <- get_var_from_type(estructura,"categorica_tsunami")
   data[,categoricas_tsunami]  <- data[,categoricas_tsunami] %>%
-    mutate_all(funs(recode(var = .,
+    mutate_all(funs(car::recode(var = .,
                            recodes = "'Sin peligro'=0;
                            'Muy alto'=100")))
 
