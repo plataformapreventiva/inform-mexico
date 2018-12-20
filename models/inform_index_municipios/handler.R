@@ -250,7 +250,8 @@ if(length(opt) > 1){
                                  unlist(subsubdimension_l))
 
   inform <- arrange(inform, desc(INFORM)) %>%
-    mutate(ranking = 1:nrow(inform))
+            mutate(ranking = 1:nrow(inform),
+                   cve_ent = substr(cve_muni, 1, 2))
 
   #----------------------------------------------------------------------------------------
 
