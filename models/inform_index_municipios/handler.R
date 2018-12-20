@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 options(warn=-1)
 
-source("models/inform_index/aux.R")
+source("models/inform_index_municipios/aux.R")
 library(optparse)
 library(dbplyr)
 library(dplyr)

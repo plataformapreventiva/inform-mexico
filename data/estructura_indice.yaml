@@ -1,4 +1,4 @@
-Inform: 
+Inform:
   Dimensión:
     1. Amenazas y Exposición:
       Subdimensión:
@@ -132,7 +132,7 @@ Inform:
                 flexibilidad_financiera:
                   tipo:
                     - numerica
-                    - mas_mejor 
+                    - mas_mejor
                 endeudamiento:
                   tipo:
                     - numerica
@@ -145,7 +145,7 @@ Inform:
                 complejidad_2014:
                   tipo:
                     - numerica
-                    - mas_mejor 
+                    - mas_mejor
             2.2.3 Administrativa / operativa:
               variable:
                 valor_ici:
@@ -178,8 +178,8 @@ Inform:
               variable:
                 densidad_medicos:
                   tipo:
-                    - numerica 
-                    - mas_mejor      
+                    - numerica
+                    - mas_mejor
                 densidad_hospitales:
                   tipo:
                     - numerica
@@ -307,3 +307,4 @@ Inform:
                 disc_men:
                   tipo:
                     - numerica
+
