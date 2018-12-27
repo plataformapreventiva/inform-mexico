@@ -87,8 +87,8 @@ if(length(opt) > 1){
 
   print('Pulling datasets')
 
-  data <- tbl(con, dbplyr::in_schema('features','inform_variables_municipios'))  %>%
-    select(-c(actualizacion_sedesol,data_date,media_salario_m,media_salario_h,pobreza_porcentaje,inf_publ)) %>%
+  data <- read.csv("data/inform_variables_municipios.csv") %>%
+    select(-c(X,media_salario_m,media_salario_h,pobreza_porcentaje,inf_publ)) %>%
     collect()
   estructura <- read_yaml("data/estructura_indice.yaml")
 
@@ -215,7 +215,9 @@ if(length(opt) > 1){
   subdimension_l <- list()
   subsubdimension_l <- list()
 
-  # Media aritmética entre subdimensiones
+  # Media aritmética entre subdimensiones. 
+  # Para cada subdimensión se toma la componente principal 
+  # de las variables que la componen y se usa para hacer el promedio.
   for (dimension in dimensiones) {
     subdimensiones <- estructura$Inform$Dimensión[[eval(dimension)]] %>%
       purrr::flatten() %>% names()
@@ -255,7 +257,7 @@ if(length(opt) > 1){
 
   #----------------------------------------------------------------------------------------
 
-  # Save model table
+  # Guardad la tabla del modelo
 
   temp <- sapply(colnames(inform),str_replace_all, "[1-9].","")
   colnames(inform) <- sapply(temp,str_replace_all, " +","_")
